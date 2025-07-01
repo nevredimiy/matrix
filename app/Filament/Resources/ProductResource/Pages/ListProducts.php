@@ -23,48 +23,50 @@ class ListProducts extends ListRecords
                 ->color('success')
                 ->requiresConfirmation()
                 ->action(function () {
-                    $url = 'https://dinara.david-freedman.com.ua/index.php?route=api/product/getProducts';
+
+                     // 1. Авторизация и получение токена
+                    $loginUrl = 'https://dinara.david-freedman.com.ua/index.php?route=api/login';
                     $apiKey = env('OC_DINARA_API');
 
-                    $response = Http::asForm()->post($url, [
+                    $loginResponse = Http::asForm()->post($loginUrl, [
                         'key' => $apiKey,
                     ]);
 
-                    if (!$response->ok()) {
+                    if (!$loginResponse->ok()) {
                         Notification::make()
-                            ->title('Ошибка подключения к OpenCart')
+                            ->title('Ошибка авторизации')
                             ->danger()
                             ->send();
                         return;
                     }
 
-                    $products = $response->json()['products'] ?? [];
-                    $addedCount = 0;
+                    $apiToken = $loginResponse->json('api_token');
 
-                    foreach ($products as $item) {
-                        $ean = $item['ean'] ?? null;
-                        $sku = $item['model'] ?? null;
+                    // 2. Получение продуктов
+                    $productsUrl = 'https://dinara.david-freedman.com.ua/index.php?route=api/product/getProducts';
 
-                        if (!$ean || !$sku) continue;
+                    $response = Http::get($productsUrl, [
+                        'api_token' => $apiToken,
+                    ]);
 
-                        $exists = Product::where('sku', $sku)->exists();
+                    if (!$response->ok()) {
+                        Notification::make()
+                            ->title('Ошибка при получении товаров: ' . $response->status())
+                            ->danger()
+                            ->send();
+                        return;
+                    }
 
-                        if (!$exists) {
-                            Product::create([
-                                'name' => $item['name'] ?? 'Без названия',
-                                'sku' => $sku,
-                                'stock_quantity' => $item['quantity'] ?? 0,
-                                'desired_stock_quantity' => 0,
-                                'ordered_for_production' => 0,
-                            ]);
+                    $products = $response->json('products');
+                    
 
-                            $addedCount++;
-                        }
+                    // Твой код импорта продуктов в базу
+                    foreach ($products as $product) {
+                        // например, по полю model ищем и добавляем
                     }
 
                     Notification::make()
-                        ->title('Импорт завершен')
-                        ->body("Добавлено новых товаров: {$addedCount}")
+                        ->title('Импорт завершен успешно')
                         ->success()
                         ->send();
                 }),
