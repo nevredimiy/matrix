@@ -1,5 +1,5 @@
 
-text/x-generic deploy.sh ( ASCII text )
+#text/x-generic deploy.sh ( ASCII text )
 #text/x-generic deploy.sh ( Bourne-Again shell script, ASCII text executable )
 #!/bin/bash
 
