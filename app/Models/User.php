@@ -47,13 +47,13 @@ class User extends Authenticatable implements FilamentUser
         ];
     }
 
-    // public function canAccessPanel(\Filament\Panel $panel): bool
-    // {
-    //     // Разрешить всем администраторам
-    //     return $this->is_admin; // или просто true, если ты хочешь открыть всем
-    // }
     public function canAccessPanel(\Filament\Panel $panel): bool
     {
-        return true;
+        // Разрешить всем администраторам
+        return $this->is_admin; // или просто true, если ты хочешь открыть всем
     }
+    // public function canAccessPanel(\Filament\Panel $panel): bool
+    // {
+    //     return true;
+    // }
 }

@@ -30,8 +30,6 @@ class ListProducts extends ListRecords
                         'key' => $apiKey,
                     ]);
 
-                    dd($response);
-
                     if (!$response->ok()) {
                         Notification::make()
                             ->title('Ошибка подключения к OpenCart')
