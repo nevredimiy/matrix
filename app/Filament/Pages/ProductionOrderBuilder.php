@@ -12,7 +12,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Card;
 use Filament\Forms\Components\Hidden;
 use Filament\Notifications\Notification;
-
+use Illuminate\Support\Facades\DB;
 
 class ProductionOrderBuilder extends Page implements Forms\Contracts\HasForms
 {
@@ -92,7 +92,7 @@ class ProductionOrderBuilder extends Page implements Forms\Contracts\HasForms
         // Здесь можно сохранить данные в свою таблицу production_orders
         // Пример:
         foreach ($selected as $item) {
-            \DB::table('production_orders')->insert([
+            DB::table('production_orders')->insert([
                 'product_id' => $item['product_id'],
                 'quantity' => $item['quantity'],
                 'created_at' => now(),
