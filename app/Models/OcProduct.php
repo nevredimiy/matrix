@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -7,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 class OcProduct extends Model
 {
     protected $connection = 'opencart';
-    protected $table = 'oc_product';
+    protected $table = 'product';
     protected $primaryKey = 'product_id';
     public $timestamps = false;
 

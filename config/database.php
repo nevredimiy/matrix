@@ -112,6 +112,19 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        'opencart' => [
+            'driver' => 'mysql',
+            'host' => env('OPENCART_DB_HOST', '127.0.0.1'),
+            'port' => env('OPENCART_DB_PORT', '3306'),
+            'database' => env('OPENCART_DB_DATABASE', 'opencart'),
+            'username' => env('OPENCART_DB_USERNAME', 'oc_user'),
+            'password' => env('OPENCART_DB_PASSWORD', 'secret'),
+            'charset' => 'utf8',
+            'collation' => 'utf8_general_ci',
+            'prefix' => 'oc_', 
+            'strict' => false,
+        ],
+
     ],
 
     /*
@@ -147,7 +160,7 @@ return [
 
         'options' => [
             'cluster' => env('REDIS_CLUSTER', 'redis'),
-            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_database_'),
+            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_') . '_database_'),
             'persistent' => env('REDIS_PERSISTENT', false),
         ],
 
@@ -170,5 +183,6 @@ return [
         ],
 
     ],
+
 
 ];

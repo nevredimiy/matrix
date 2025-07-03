@@ -6,9 +6,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Filament\Models\Contracts\FilamentUser;
 
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
@@ -46,14 +45,4 @@ class User extends Authenticatable implements FilamentUser
             'password' => 'hashed',
         ];
     }
-
-    public function canAccessPanel(\Filament\Panel $panel): bool
-    {
-        // Разрешить всем администраторам
-        return $this->is_admin; // или просто true, если ты хочешь открыть всем
-    }
-    // public function canAccessPanel(\Filament\Panel $panel): bool
-    // {
-    //     return true;
-    // }
 }
