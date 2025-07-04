@@ -9,6 +9,9 @@ use Filament\Actions\Action;
 use App\Models\Product;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
+use GuzzleHttp\Client;
+use GuzzleHttp\Cookie\CookieJar;
 
 class ListProducts extends ListRecords
 {
@@ -18,127 +21,85 @@ class ListProducts extends ListRecords
     {
         return [
             Action::make('import_from_opencart')
-                ->label('Импорт из OpenCart')
+                ->label('Импорт из OpenCart по Api')
                 ->icon('heroicon-o-arrow-down-tray')
                 ->color('success')
                 ->requiresConfirmation()
                 ->action(function () {
 
-                     // 1. Авторизация и получение токена
-                    $loginUrl = 'https://dinara.david-freedman.com.ua/index.php?route=api/login';
-                    $apiKey = env('OC_DINARA_API');
+$baseUrl = 'https://dinara.david-freedman.com.ua/';
+$apiKey = env('OC_DINARA_API');
+                    $cookieJar = new \GuzzleHttp\Cookie\CookieJar();
 
-                    $loginResponse = Http::asForm()->post($loginUrl, [
-                        'key' => $apiKey,
-                    ]);
-                    
+$client = new Client([
+    'base_uri' => $baseUrl,
+    'cookies' => $cookieJar,
+]);
 
-                    if (!$loginResponse->ok()) {
+$loginResponse = $client->post('index.php?route=api/login', [
+    'form_params' => ['key' => $apiKey],
+]);
+
+$body = json_decode((string) $loginResponse->getBody(), true);
+$apiToken = $body['api_token'] ?? null;
+
+if (!$apiToken) {
+    dd('Ошибка логина', $body);
+}
+
+// ⬇️ вот тут — проверим, какие cookies сохранены
+foreach ($cookieJar->toArray() as $cookie) {
+    echo $cookie['Name'] . ': ' . $cookie['Value'] . "\n";
+}
+
+// Тот же клиент, тот же cookieJar
+$response = $client->get('index.php?route=api/product/getProducts', [
+    'query' => ['api_token' => $apiToken],
+    'headers' => [
+        'Accept'     => 'application/json',
+    ]
+]);
+
+dd($response->getHeaderLine('Content-Type'), (string) $response->getBody());
+
+
+                    $body = (string) $response->getBody();
+
+                    // 👇 Добавим на этом этапе dd, чтобы увидеть реальный ответ
+                    dd($response->getHeaderLine('Content-Type'));
+
+                    $data = json_decode($body, true);
+
+                    if (!isset($data['products']) || !is_array($data['products'])) {
                         Notification::make()
-                            ->title('Ошибка авторизации')
-                            ->danger()
+                            ->title('Нет данных о продуктах')
+                            ->warning()
                             ->send();
                         return;
                     }
 
-                    $apiToken = $loginResponse->json('api_token');
-
-                    // 2. Получение продуктов
-                    $productsUrl = 'https://dinara.david-freedman.com.ua/index.php?route=api/product/getProducts';
-
-                    $response = Http::get($productsUrl, [
-                        'api_token' => $apiToken,
-                    ]);
-
-                    if (!$response->ok()) {
-                        Notification::make()
-                            ->title('Ошибка при получении товаров: ' . $response->status())
-                            ->danger()
-                            ->send();
-                        return;
-                    }
-
-
-                    $products = $response->json('products');
-                    
-
-                    // Твой код импорта продуктов в базу
-                    foreach ($products as $product) {
-                        // например, по полю model ищем и добавляем
+                    // 5. Сохраняем продукты
+                    foreach ($data['products'] as $product) {
+                        Product::updateOrCreate(
+                            ['model' => $product['model']],
+                            [
+                                'name' => $product['name'] ?? 'Без названия',
+                                'ean' => $product['ean'] ?? null,
+                                'price' => $product['price'] ?? 0,
+                                'quantity' => $product['quantity'] ?? 0,
+                                'status' => $product['status'] ?? 0,
+                            ]
+                        );
                     }
 
                     Notification::make()
-                        ->title('Импорт завершен успешно')
+                        ->title('Импорт завершен: ' . count($data['products']) . ' товаров')
                         ->success()
                         ->send();
+
                 }),
 
-//                 ->action(function () {
-//     $loginUrl = 'https://dinara.david-freedman.com.ua/index.php?route=api/login';
-//     $productsUrl = 'https://dinara.david-freedman.com.ua/index.php?route=api/product/getProducts';
-//     $apiKey = env('OC_DINARA_API');
 
-//     $loginResponse = Http::asForm()->post($loginUrl, ['key' => $apiKey]);
-
-//     if (!$loginResponse->ok()) {
-//         Notification::make()
-//             ->title('Ошибка авторизации')
-//             ->danger()
-//             ->send();
-//         return;
-//     }
-
-//     $cookieJar = $loginResponse->cookies();
-//     $cookiesArray = [];
-//     foreach ($cookieJar->toArray() as $cookie) {
-//         $cookiesArray[$cookie['Name']] = $cookie['Value'];
-//     }
-
-//     $apiToken = $loginResponse->json('api_token');
-
-//     $response = Http::withCookies($cookiesArray, 'dinara.david-freedman.com.ua')
-//         ->get($productsUrl, [
-//             'api_token' => $apiToken,
-//         ]);
-
-//     if (!$response->ok()) {
-//         Notification::make()
-//             ->title('Ошибка при получении товаров: ' . $response->status())
-//             ->danger()
-//             ->send();
-//         return;
-//     }
-
-//     $data = $response->json();
-
-//     if (!isset($data['products']) || !is_array($data['products'])) {
-//         Notification::make()
-//             ->title('Нет данных о продуктах')
-//             ->warning()
-//             ->send();
-//         return;
-//     }
-
-//     $products = $data['products'];
-
-//     foreach ($products as $product) {
-//         Product::updateOrCreate(
-//             ['model' => $product['model']],
-//             [
-//                 'name' => $product['name'],
-//                 'ean' => $product['ean'],
-//                 'price' => $product['price'],
-//                 'quantity' => $product['quantity'],
-//                 'status' => $product['status'],
-//             ]
-//         );
-//     }
-
-//     Notification::make()
-//         ->title('Импорт завершен успешно: ' . count($products) . ' товаров')
-//         ->success()
-//         ->send();
-// })
 
 
                  Actions\CreateAction::make(),
