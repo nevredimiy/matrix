@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model
 {
-    protected $fillabel = [
+    protected $fillable = [
         'name',
         'sku',
         'stock_quantity', // количество 
