@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Cache;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use App\Models\OcProduct;
+use Illuminate\Support\Facades\DB;
 
 class ListProducts extends ListRecords
 {
@@ -27,11 +28,23 @@ class ListProducts extends ListRecords
                 ->requiresConfirmation()
                 ->icon('heroicon-o-arrow-down-tray')
                 ->action(function () {
-                    $products = OcProduct::whereNotNull('ean')
+                    $productsOc = OcProduct::query()
+                        ->whereNotNull('ean')
+                        ->with('description')
                         ->where('ean', '!=', '')
-                        ->get()
-                        ->toArray;
-                    dd($products);
+                        ->get();
+
+                    $productsForSave = [];
+                    foreach ($productsOc as $product) {
+                        $productsForSave[] = [
+                            'name' => $product->description->name,
+                            'sku' => $product->model,
+                            'stock_quantity' => $product->quantity,
+                        ];
+                    }
+
+                    DB::table('products')->insert($productsForSave);
+
                 }),
 
             Actions\CreateAction::make(),

@@ -8,8 +8,9 @@ class Product extends Model
 {
     protected $fillabel = [
         'name',
-        'stock_quantity',
-        'desired_stock_quantity',
-        'order_for_quantity'
+        'sku',
+        'stock_quantity', // количество 
+        'desired_stock_quantity', // желаемое количество
+        'order_for_production' // сколько отгружено
     ];
 }
