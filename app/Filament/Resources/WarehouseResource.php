@@ -21,16 +21,20 @@ class WarehouseResource extends Resource
 
     protected static ?string $navigationLabel = 'Магазины';
 
+    
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
+                    ->label('Назва')
                     ->required()
                     ->maxLength(191),
                 Forms\Components\TextInput::make('address')
+                    ->label('Адреса')
                     ->maxLength(191),
-            ]);
+            ])->columns(1);
     }
 
     public static function table(Table $table): Table
@@ -38,8 +42,10 @@ class WarehouseResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
+                    ->label('Назва')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('address')
+                    ->label('Адреса')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()

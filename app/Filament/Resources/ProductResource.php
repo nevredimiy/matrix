@@ -30,22 +30,18 @@ class ProductResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
-                    ->required()
+                    ->label('Назва')
                     ->maxLength(191),
                 Forms\Components\TextInput::make('sku')
                     ->label('SKU')
                     ->required()
                     ->maxLength(191),
                 Forms\Components\TextInput::make('stock_quantity')
-                    ->required()
+                    ->label('Кіль-сть')
                     ->numeric()
                     ->default(0),
                 Forms\Components\TextInput::make('desired_stock_quantity')
-                    ->required()
-                    ->numeric()
-                    ->default(0),
-                Forms\Components\TextInput::make('ordered_for_production')
-                    ->required()
+                    ->label('Бажана кіль-сть')
                     ->numeric()
                     ->default(0),
             ]);
@@ -56,17 +52,17 @@ class ProductResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
+                    ->label('Назва')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('sku')
                     ->label('SKU')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('stock_quantity')
+                    ->label('Кількість')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('desired_stock_quantity')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('ordered_for_production')
+                    ->label('Бажана кіль-сть')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
