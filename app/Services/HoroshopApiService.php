@@ -22,7 +22,7 @@ class HoroshopApiService
     {
         return Cache::remember('horoshop_api_token', now()->addMinutes(60), function () {
             $response = Http::withHeaders([
-                'Content-Type' => 'application/json', // <-- ОБЯЗАТЕЛЬНО
+                'Content-Type' => 'application/json', 
             ])
             ->post("{$this->baseUrl}/auth/", [
                 'login' => $this->login,
@@ -31,7 +31,6 @@ class HoroshopApiService
 
             if ($response['status'] === 'OK') {
                  $token = $response['response']['token'];
-                dd($token); // проверь, что он корректный
                 return $token;
             }
 
@@ -39,14 +38,19 @@ class HoroshopApiService
         });
     }
 
-    public function getOrders($params = [])
+    public function getOrders(array $params = [])
     {
         $token = $this->getToken();
 
+        // добавляем токен в тело запроса
+        $body = array_merge(['token' => $token], $params);
+
+        // dd($body);
         return Http::withHeaders([
-                'X-Auth-Token' => $token, 
+                'Content-Type' => 'application/json',
             ])
-            ->get("{$this->baseUrl}/orders/get_available_statuses", $params)
+            ->post("{$this->baseUrl}/orders/get/", $body)
             ->json();
     }
+
 }

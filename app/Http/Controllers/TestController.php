@@ -12,8 +12,12 @@ class TestController extends Controller
 {
     public function index (HoroshopApiService $api) {
         
-        $orders = $api->getOrders();
-        dump($orders);
+        $orders = $api->getOrders([
+        'status' => [1, 2], // например, только новые и в обработке
+        'limit' => 10,
+    ]);
+
+    dd($orders);
 
         return view('test');
     }
