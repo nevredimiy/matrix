@@ -10,20 +10,17 @@ use App\Services\HoroshopApiService;
 
 class TestController extends Controller
 {
-    public function index (HoroshopApiService $api) {
-        
+    public function index(HoroshopApiService $api)
+    {
+
         $orders = $api->getOrders([
-        'status' => [1, 2], // например, только новые и в обработке
-        'limit' => 10,
-    ]);
+            'status' => [1, 2], // например, только новые и в обработке
+            'limit' => 10,
+        ])['response']['orders'];
 
-    dd($orders);
+        // dd($orders);
 
-        return view('test');
+        return view('test', compact('orders'));
     }
-
-    
-
-
-
 }
+
