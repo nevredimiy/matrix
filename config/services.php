@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'horoshop' => [
+        'base_url' => env('HOROSHOP_API_URL'),
+        'login' => env('HOROSHOP_API_LOGIN'),
+        'password' => env('HOROSHOP_API_PASSWORD'),
+    ],
+
 ];

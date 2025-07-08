@@ -34,16 +34,19 @@ class ProductResource extends Resource
                     ->maxLength(191),
                 Forms\Components\TextInput::make('sku')
                     ->label('SKU')
+                    ->unique(ignoreRecord: true)
                     ->required()
                     ->maxLength(191),
                 Forms\Components\TextInput::make('stock_quantity')
                     ->label('Кіль-сть')
                     ->numeric()
+                     ->minLength(0)
                     ->default(0),
                 Forms\Components\TextInput::make('desired_stock_quantity')
                     ->label('Бажана кіль-сть')
                     ->numeric()
-                    ->default(0),
+                    ->default(0)
+                    ->minLength(0),
             ]);
     }
 
