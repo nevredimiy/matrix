@@ -18,41 +18,6 @@ class HoroshopApiService
         $this->password = config('services.horoshop.password');
     }
 
-    // public function getToken(): string
-    // {
-    //     return Cache::remember('horoshop_api_token', now()->addMinutes(60), function () {
-    //         $response = Http::withHeaders([
-    //             'Content-Type' => 'application/json', 
-    //         ])
-    //         ->post("{$this->baseUrl}/auth/", [
-    //             'login' => $this->login,
-    //             'password' => $this->password,
-    //         ])->json();
-
-    //         if ($response['status'] === 'OK') {
-    //              $token = $response['response']['token'];
-    //             return $token;
-    //         }
-
-    //         throw new \Exception("Horoshop API auth failed: " . $response['response']['message']);
-    //     });
-    // }
-
-    // public function getOrders(array $params = [])
-    // {
-    //     $token = $this->getToken();
-
-    //     // добавляем токен в тело запроса
-    //     $body = array_merge(['token' => $token], $params);
-
-    //     // dd($body);
-    //     return Http::withHeaders([
-    //             'Content-Type' => 'application/json',
-    //         ])
-    //         ->post("{$this->baseUrl}/orders/get/", $body)
-    //         ->json();
-    // }
-
     public function getOrders(array $params = [])
     {
         try {
@@ -133,7 +98,4 @@ class HoroshopApiService
 
         return $response;
     }
-
-
 }
-
