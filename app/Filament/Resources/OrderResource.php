@@ -2,10 +2,10 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\ProductResource\Pages;
-use App\Filament\Resources\ProductResource\RelationManagers;
-use App\Models\Product;
-use Filament\Actions\Action as ActionsAction;
+use App\Filament\Resources\OrderResource\Pages;
+use App\Filament\Resources\OrderResource\RelationManagers;
+use App\Models\Order;
+use App\Models\Store;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -13,17 +13,14 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Actions\Action;
-use Illuminate\Support\Facades\Http;
-use Filament\Notifications\Notification;
 
-class ProductResource extends Resource
+class OrderResource extends Resource
 {
-    protected static ?string $model = Product::class;
+    protected static ?string $model = Order::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $navigationLabel = 'Товары';
+    protected static ?string $navigationLabel = 'Замовлення';
 
     protected static ?string $navigationGroup = 'Головна';
 
@@ -31,24 +28,27 @@ class ProductResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->label('Назва')
-                    ->maxLength(191),
-                Forms\Components\TextInput::make('sku')
-                    ->label('SKU')
-                    ->unique(ignoreRecord: true)
+                Forms\Components\TextInput::make('order_number')
+                    ->label('Номер замовлення')
                     ->required()
                     ->maxLength(191),
-                Forms\Components\TextInput::make('stock_quantity')
-                    ->label('Кіль-сть')
-                    ->numeric()
-                     ->minLength(0)
-                    ->default(0),
-                Forms\Components\TextInput::make('desired_stock_quantity')
-                    ->label('Бажана кіль-сть')
-                    ->numeric()
-                    ->default(0)
-                    ->minLength(0),
+                Forms\Components\TextInput::make('product_sku')
+                    ->label('SKU')
+                    ->required()
+                    ->maxLength(191),
+                Forms\Components\TextInput::make('quantity')
+                    ->label('Кількість')
+                    ->required()
+                    ->numeric(),
+                Forms\Components\Select::make('store.name')
+                    ->label('Магазин')
+                    ->options(Store::pluck('name', 'id')->toArray())
+                    ->required(),
+                Forms\Components\TextInput::make('status')
+                    ->label('Статус')
+                    ->required()
+                    ->maxLength(191)
+                    ->default('pending'),
             ]);
     }
 
@@ -56,20 +56,22 @@ class ProductResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
-                    ->label('Назва')
+                Tables\Columns\TextColumn::make('order_number')
+                    ->label('Номер замовлення')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('sku')
+                Tables\Columns\TextColumn::make('product_sku')
                     ->label('SKU')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('stock_quantity')
+                Tables\Columns\TextColumn::make('quantity')
                     ->label('Кількість')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('desired_stock_quantity')
-                    ->label('Бажана кіль-сть')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('store.name')
+                    ->label('Магазин')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('status')
+                    ->label('Статус')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -102,13 +104,9 @@ class ProductResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListProducts::route('/'),
-            'create' => Pages\CreateProduct::route('/create'),
-            'edit' => Pages\EditProduct::route('/{record}/edit'),
+            'index' => Pages\ListOrders::route('/'),
+            'create' => Pages\CreateOrder::route('/create'),
+            'edit' => Pages\EditOrder::route('/{record}/edit'),
         ];
     }
-
-
-
-
 }

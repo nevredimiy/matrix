@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\WarehouseResource\Pages;
-use App\Filament\Resources\WarehouseResource\RelationManagers;
-use App\Models\Warehouse;
+use App\Filament\Resources\StoreResource\Pages;
+use App\Filament\Resources\StoreResource\RelationManagers;
+use App\Models\Store;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -13,14 +13,15 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class WarehouseResource extends Resource
+class StoreResource extends Resource
 {
-    protected static ?string $model = Warehouse::class;
+    protected static ?string $model = Store::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $navigationLabel = 'Склады';
+    protected static ?string $navigationLabel = 'Магазины';
 
+    protected static ?string $navigationGroup = 'Головна';
 
     public static function form(Form $form): Form
     {
@@ -33,14 +34,14 @@ class WarehouseResource extends Resource
                 Forms\Components\TextInput::make('address')
                     ->label('Адреса')
                     ->maxLength(191),
-            ])->columns(1);
+            ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                 Tables\Columns\TextColumn::make('name')
                     ->label('Назва')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('address')
@@ -78,9 +79,9 @@ class WarehouseResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListWarehouses::route('/'),
-            'create' => Pages\CreateWarehouse::route('/create'),
-            'edit' => Pages\EditWarehouse::route('/{record}/edit'),
+            'index' => Pages\ListStores::route('/'),
+            'create' => Pages\CreateStore::route('/create'),
+            'edit' => Pages\EditStore::route('/{record}/edit'),
         ];
     }
 }

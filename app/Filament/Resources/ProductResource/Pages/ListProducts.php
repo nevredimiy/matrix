@@ -32,23 +32,54 @@ class ListProducts extends ListRecords
                         ->whereNotNull('ean')
                         ->with('description')
                         ->where('ean', '!=', '')
-                        ->get();
+                        ->get()
+                        ->toArray();
+
+                    $products = Product::all()->toArray();
+                    $existingSkus = array_column($products, 'sku');
 
                     $productsForSave = [];
+                    $productsForUpdate = [];
+
                     foreach ($productsOc as $product) {
-                        $productsForSave[] = [
-                            'name' => $product->description->name,
-                            'sku' => $product->model,
-                            'stock_quantity' => $product->quantity,
+                        $data = [
+                            'name' => $product['description']['name'],
+                            'sku' => $product['model'],
+                            'stock_quantity' => $product['quantity'],
                         ];
+
+                        if (in_array($product['model'], $existingSkus)) {
+                            $productsForUpdate[] = $data;
+                        } else {
+                            $productsForSave[] = $data;
+                        }
                     }
 
-                    DB::table('products')->insert($productsForSave);
+                    if (!empty($productsForSave)) {
+                        DB::table('products')->insert($productsForSave);
+                    }
 
+                    foreach ($productsForUpdate as $updateData) {
+                        DB::table('products')
+                            ->where('sku', $updateData['sku'])
+                            ->update([
+                                'name' => $updateData['name'],
+                                'stock_quantity' => $updateData['stock_quantity'],
+                            ]);
+                    }
+
+                    // Уведомление прямо здесь:
+                    Notification::make()
+                        ->title('Оновлення завершено')
+                        ->body('Додано: ' . count($productsForSave) . ', оновлено: ' . count($productsForUpdate))
+                        ->success()
+                        ->send();
                 }),
 
+
+
             Actions\CreateAction::make(),
-            
+
             // Action::make('import_from_opencart')
             //     ->label('Импорт из OpenCart по Api')
             //     ->icon('heroicon-o-arrow-down-tray')
@@ -128,8 +159,13 @@ class ListProducts extends ListRecords
 
 
 
+<<<<<<< HEAD
                  
             ];
 
+=======
+
+        ];
+>>>>>>> 57e9457 (first)
     }
 }

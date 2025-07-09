@@ -16,5 +16,8 @@ class OcOrderProduct extends Model
         return $this->belongsTo(OcOrder::class, 'order_id', 'order_id');
     }
 
-
+    public function product()
+    {
+        return $this->belongsTo(OcProduct::class, 'product_id', 'product_id');
+    }
 }
