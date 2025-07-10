@@ -373,7 +373,7 @@ class ListOrders extends ListRecords
             // Данные для сохранения/обновления
             $data = [
                 'name' => $product['title']['ua'] ?? 'Без назви',
-                'image' => empty($product['images']) ? ($product['gallery_common'][0] ?? '') : $product['image'][0],
+                'image' => empty($product['images']) ? ($product['gallery_common'][0] ?? '') : $product['images'][0],
                 'stock_quantity' => $product['quantity'] ?? 0,
                 'updated_at' => now(),
             ];
