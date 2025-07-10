@@ -316,6 +316,7 @@ class ListOrders extends ListRecords
         // Получаем все товары из OC, у которых есть EAN
         $ocProducts = \App\Models\OcProduct::whereNotNull('ean')
             ->where('ean', '!=', '')
+            ->with('description')
             ->get();
 
         foreach ($ocProducts as $product) {
@@ -323,7 +324,7 @@ class ListOrders extends ListRecords
 
             // Данные для сохранения/обновления
             $data = [
-                'name' => $product->name ?? 'Без назви',
+                'name' => $product->description->name ?? 'Без назви',
                 'image' => isset($product->image) ? 'https://dinara.david-freedman.com.ua/image/' . $product->image : '',
                 'quantity' => $product->quantity ?? 0,
                 'updated_at' => now(),
