@@ -108,10 +108,10 @@ class OrderResource extends Resource
                     ->sortable(),
                 TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'pending' => 'success',
-                        'new' => 'warning',
-                    })
+                    // ->color(fn (string $state): string => match ($state) {
+                    //     'pending' => 'success',
+                    //     'new' => 'warning',
+                    // })
                     ->label('Статус')
                     ->searchable(),
                 TextColumn::make('created_at')
