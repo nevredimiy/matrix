@@ -19,7 +19,9 @@ class ProductionFacilityResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $navigationLabel = 'Производственный объект';
+    protected static ?string $navigationLabel = 'Производства';
+
+    protected static ?string $navigationGroup = 'Головна';
     
     public static function form(Form $form): Form
     {
