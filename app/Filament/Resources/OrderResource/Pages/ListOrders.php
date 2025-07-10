@@ -295,11 +295,15 @@ class ListOrders extends ListRecords
                             ]);
                     }
 
-                    $this->syncProductsFromHor($allowedSkus);
+                    $ordersForSaveCount = count($ordersForSave);
+                    $ordersForUpdateCount = count($ordersForUpdate);
+                    $archivedOrdersCount = count($arhivedOrders);
+                    [$createdProducts, $updatedProducts] = $this->syncProductsFromHor($allowedSkus);
 
                     Notification::make()
                         ->title('Оновлення з Хорошоп завершено')
-                        ->body('Додано: ' . count($ordersForSave) . ', оновлено: ' . count($ordersForUpdate) . ', видалено ' . count($arhivedOrders))
+                        // ->body('Додано: ' . count($ordersForSave) . ', оновлено: ' . count($ordersForUpdate) . ', видалено ' . count($arhivedOrders))
+                        ->body("Додано: {$ordersForSaveCount},\nоновлено: {$ordersForUpdateCount},\nвидалено: {$archivedOrdersCount},\nДодано продуктів: {$createdProducts},\nОновлено продуктів: {$updatedProducts}")
                         ->success()
                         ->send();
                 })
