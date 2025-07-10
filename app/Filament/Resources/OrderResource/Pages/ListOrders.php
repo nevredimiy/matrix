@@ -193,11 +193,12 @@ class ListOrders extends ListRecords
     {
         $inactiveStatuses = [5, 14, 0];
 
-        $this->archiveClosedOrders($inactiveStatuses);
-        $this->syncOpenOrders($inactiveStatuses);
+        $archivedCount = $this->archiveClosedOrders($inactiveStatuses);
+        [$createdCount, $updatedCount] = $this->syncOpenOrders($inactiveStatuses);
 
         Notification::make()
-            ->title('Замовлення оновлено')
+            ->title("Оновлення завершено")
+            ->body("➕ Додано: {$createdCount}\n✏️ Оновлено: {$updatedCount}\n🗃️ Архівовано: {$archivedCount}")
             ->success()
             ->send();
     }
