@@ -21,8 +21,9 @@ use Filament\Tables\Filters\QueryBuilder\Constraints\SelectConstraint;
 use Filament\Tables\Filters\Filter;
 use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Grouping\Group;
-
-
+use Filament\Tables\Columns\SelectColumn;
+use Filament\Tables\Actions\BulkAction;
+use Illuminate\Database\Eloquent\Collection;
 
 class OrderResource extends Resource
 {
@@ -50,14 +51,26 @@ class OrderResource extends Resource
                     ->label('Кількість')
                     ->required()
                     ->numeric(),
-                Forms\Components\Select::make('store.name')
+                 Forms\Components\TextInput::make('stock_quantity')
+                    ->label('На складі')
+                    ->required()
+                    ->numeric(),
+                Forms\Components\TextInput::make('name')
+                    ->label('Назва'),
+                Forms\Components\TextInput::make('image')
+                    ->label('Посилання на фото'),
+                Forms\Components\DateTimePicker::make('order_date')
+                    ->label('Дата створення'),
+                Forms\Components\Select::make('store_id')
                     ->label('Магазин')
                     ->options(Store::pluck('name', 'id')->toArray())
                     ->required(),
-                Forms\Components\TextInput::make('status')
+                Forms\Components\Select::make('status')
                     ->label('Статус')
-                    ->required()
-                    ->maxLength(191)
+                    ->options([
+                        'pending' => 'В ожидании',
+                        'new' => 'Новый'
+                    ])
                     ->default('pending'),
             ]);
     }
@@ -94,6 +107,11 @@ class OrderResource extends Resource
                     ->label('Магазин')
                     ->sortable(),
                 TextColumn::make('status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'pending' => 'success',
+                        'new' => 'warning',
+                    })
                     ->label('Статус')
                     ->searchable(),
                 TextColumn::make('created_at')
@@ -145,6 +163,16 @@ class OrderResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
+                BulkAction::make('createFactoryOrder')
+                ->label('Создать заказ на производство')
+                ->action(function (Collection $records, array $data) {
+                    // Сохраняем ID заказов во временное хранилище (например, сессия)
+                    session(['selected_order_ids' => $records->pluck('id')->toArray()]);
+
+                    // редирект на кастомную страницу формы
+                    return redirect()->route('filament.admin.pages.create-factory-order');
+                })
+                ->requiresConfirmation()
             ]);
     }
 

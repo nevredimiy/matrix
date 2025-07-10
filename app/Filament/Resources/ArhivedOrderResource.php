@@ -19,6 +19,8 @@ class ArhivedOrderResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    protected static ?string $navigationGroup = 'Общие настройки';
+
     public static function form(Form $form): Form
     {
         return $form

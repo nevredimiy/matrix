@@ -24,6 +24,8 @@ class ProductionOrderBuilder extends Page implements Forms\Contracts\HasForms
 
     protected static ?string $navigationLabel = 'Заказ на производство';
 
+    protected static ?string $navigationGroup = 'Общие настройки';
+
     public ?array $products = [];
     public  $orders = null;
 

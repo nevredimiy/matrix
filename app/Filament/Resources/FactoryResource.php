@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\ProductionFacilityResource\Pages;
-use App\Filament\Resources\ProductionFacilityResource\RelationManagers;
-use App\Models\ProductionFacility;
+use App\Filament\Resources\FactoryResource\Pages;
+use App\Filament\Resources\FactoryResource\RelationManagers;
+use App\Models\Factory;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -13,16 +13,16 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class ProductionFacilityResource extends Resource
+class FactoryResource extends Resource
 {
-    protected static ?string $model = ProductionFacility::class;
+    protected static ?string $model = Factory::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $navigationLabel = 'Производства';
 
     protected static ?string $navigationGroup = 'Головна';
-    
+
     public static function form(Form $form): Form
     {
         return $form
@@ -30,7 +30,7 @@ class ProductionFacilityResource extends Resource
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(191),
-                Forms\Components\TextInput::make('location')
+                Forms\Components\TextInput::make('address')
                     ->maxLength(191),
             ]);
     }
@@ -41,7 +41,7 @@ class ProductionFacilityResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('location')
+                Tables\Columns\TextColumn::make('address')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -75,9 +75,9 @@ class ProductionFacilityResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListProductionFacilities::route('/'),
-            'create' => Pages\CreateProductionFacility::route('/create'),
-            'edit' => Pages\EditProductionFacility::route('/{record}/edit'),
+            'index' => Pages\ListFactories::route('/'),
+            'create' => Pages\CreateFactory::route('/create'),
+            'edit' => Pages\EditFactory::route('/{record}/edit'),
         ];
     }
 }

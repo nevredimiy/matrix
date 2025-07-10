@@ -21,6 +21,8 @@ class ProductionOrderResource extends Resource
 
     protected static ?string $navigationLabel = 'Заказы на производство';
 
+    protected static ?string $navigationGroup = 'Общие настройки';
+
     public static function form(Form $form): Form
     {
         return $form
