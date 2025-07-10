@@ -24,123 +24,7 @@ class ListOrders extends ListRecords
                 ->color('success')
                 ->requiresConfirmation()
                 ->icon('heroicon-o-arrow-down-tray')
-                ->action(function () {
-                    // dd(DB::table('orders')->limit(10)->get());
-                    // dd(OcOrder::limit(1)->with(['products.product'])->orderBy('order_id', 'desc')->get());
-                    // DB::table('orders')->truncate();
-                    // dd();
-
-                    // Удаление заказов если статус Закрыт
-                    // $inactiveStatuses = [3, 5, 7, 8, 9, 10, 11, 13, 14];
-                    $inactiveStatuses = [5, 14, 0];
-
-                    $existingOrderNumbers = DB::table('orders')
-                        ->where('store_id', 1) // 1 - ocstore
-                        ->pluck('order_number')
-                        ->all();
-                    $archivedOrders = OcOrder::whereIn('order_id', $existingOrderNumbers)
-                        ->whereIn('order_status_id',  $inactiveStatuses)
-                        ->get();
-
-                    if ($archivedOrders->isNotEmpty()) {
-                        foreach ($archivedOrders as $archived) {
-                            $orderItems = DB::table('orders')
-                                ->where('order_number', $archived->order_id)
-                                ->where('store_id', 1)
-                                ->get();
-
-                            foreach ($orderItems as $item) {
-                                DB::table('arhived_orders')->insert([
-                                    'order_number' => $item->order_number,
-                                    'product_sku' => $item->product_sku,
-                                    'quantity' => $item->quantity,
-                                    'store_id' => $item->store_id,
-                                    'status' => 'архів',
-                                    'created_at' => now(),
-                                    'updated_at' => now()
-                                ]);
-                            }
-
-                            DB::table('orders')
-                                ->where('order_number', $archived->order_id)
-                                ->where('store_id', 1)
-                                ->delete();
-                        }
-                    }
-
-                    // Добавление и обновление заказов
-                    $ocOrders = OcOrder::whereHas('products.product', function ($query) {
-                        $query->whereNotNull('ean')->where('ean', '!=', '');
-                    })
-                        ->with(['products'])
-                        ->whereNotIn('order_status_id', $inactiveStatuses) // исключаем Сделка завершена, Отправлено
-                        ->get();
-
-                    // Получаем ID уже существующих заказов из локальной таблицы
-                    $existingOrderIds = DB::table('orders')
-                        ->where('store_id', 1)
-                        ->pluck('order_number')
-                        ->all();
-
-                    $ordersForSave = [];
-                    $ordersForUpdate = [];
-
-                    foreach ($ocOrders as $order) {
-                        foreach ($order->products as $product) {
-
-                            $data = [
-                                'order_number' => $order->order_id,
-                                'product_sku' =>  $product->model,
-                                'quantity'  =>  $product->quantity,
-                                'store_id' =>  1, // OcStore
-                                'status'  =>  'відкритий',
-                                'image' => 'https://dinara.david-freedman.com.ua/image/' . $product->product->image,
-                                'name' => $product->name,
-                                'stock_quantity' => $product->product->quantity,
-                                'order_date' => $order->date_added,
-                                'created_at' => now(),
-                                'updated_at' => now()
-                            ];
-
-                            if (in_array($order['order_id'], $existingOrderIds)) {
-                                $ordersForUpdate[] = $data;
-                            } else {
-                                $ordersForSave[] = $data;
-                            }
-                        }
-                    }
-
-                    // dd($ordersForUpdate);
-
-                    if (!empty($ordersForSave)) {
-                        DB::table('orders')->insert($ordersForSave);
-                    }
-
-                    foreach ($ordersForUpdate as $updateData) {
-                        DB::table('orders')
-                            ->where('order_number', $updateData['order_number'])
-                            ->where('product_sku', $updateData['product_sku']) // уточнение
-                            ->update([
-                                'quantity' => $updateData['quantity'],
-                                'store_id' => $updateData['store_id'],
-                                'status' => $updateData['status'],
-                                'image' => $updateData['image'],
-                                'name' => $updateData['name'],
-                                'stock_quantity' => $updateData['stock_quantity'],
-                                'order_date' => $updateData['order_date'],
-                                'updated_at' => now(),
-                            ]);
-                    }
-
-
-
-                    // Сообщение об успехе
-                    Notification::make()
-                        ->title('Оновлення завершено')
-                        ->body('Додано: ' . count($ordersForSave) . ', оновлено: ' . count($ordersForUpdate) . ', видалено: ' . count($archivedOrders))
-                        ->success()
-                        ->send();
-                }),
+                ->action(fn () => $this->updateOrdersFromOc()),
 
 
             Action::make('update_orders_hor')
@@ -304,4 +188,116 @@ class ListOrders extends ListRecords
             // Actions\CreateAction::make(),
         ];
     }
+
+    protected function updateOrdersFromOc()
+    {
+        $inactiveStatuses = [5, 14, 0];
+
+        $this->archiveClosedOrders($inactiveStatuses);
+        $this->syncOpenOrders($inactiveStatuses);
+
+        Notification::make()
+            ->title('Замовлення оновлено')
+            ->success()
+            ->send();
+    }
+
+    protected function archiveClosedOrders(array $inactiveStatuses): void
+    {
+        $existingOrderNumbers = DB::table('orders')
+            ->where('store_id', 1)
+            ->pluck('order_number')
+            ->all();
+
+        $archivedOrders = OcOrder::whereIn('order_id', $existingOrderNumbers)
+            ->whereIn('order_status_id', $inactiveStatuses)
+            ->get();
+
+        foreach ($archivedOrders as $archived) {
+            $orderItems = DB::table('orders')
+                ->where('order_number', $archived->order_id)
+                ->where('store_id', 1)
+                ->get();
+
+            foreach ($orderItems as $item) {
+                DB::table('arhived_orders')->insert([
+                    'order_number' => $item->order_number,
+                    'product_sku' => $item->product_sku,
+                    'quantity' => $item->quantity,
+                    'store_id' => $item->store_id,
+                    'status' => 'архів',
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+            }
+
+            DB::table('orders')
+                ->where('order_number', $archived->order_id)
+                ->where('store_id', 1)
+                ->delete();
+        }
+    }
+
+    protected function syncOpenOrders(array $inactiveStatuses): void
+    {
+        $ocOrders = OcOrder::whereHas('products.product', fn ($query) =>
+            $query->whereNotNull('ean')->where('ean', '!=', '')
+        )
+            ->with(['products'])
+            ->whereNotIn('order_status_id', $inactiveStatuses)
+            ->get();
+
+        $existingOrderIds = DB::table('orders')
+            ->where('store_id', 1)
+            ->pluck('order_number')
+            ->all();
+
+        $ordersForSave = [];
+        $ordersForUpdate = [];
+
+        foreach ($ocOrders as $order) {
+            foreach ($order->products as $product) {
+                $data = [
+                    'order_number' => $order->order_id,
+                    'product_sku' => $product->model,
+                    'quantity' => $product->quantity,
+                    'store_id' => 1,
+                    'status' => 'відкритий',
+                    'image' => 'https://dinara.david-freedman.com.ua/image/' . $product->product->image,
+                    'name' => $product->name,
+                    'stock_quantity' => $product->product->quantity,
+                    'order_date' => $order->date_added,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ];
+
+                if (in_array($order->order_id, $existingOrderIds)) {
+                    $ordersForUpdate[] = $data;
+                } else {
+                    $ordersForSave[] = $data;
+                }
+            }
+        }
+
+        if (!empty($ordersForSave)) {
+            DB::table('orders')->insert($ordersForSave);
+        }
+
+        foreach ($ordersForUpdate as $updateData) {
+            DB::table('orders')
+                ->where('order_number', $updateData['order_number'])
+                ->where('product_sku', $updateData['product_sku'])
+                ->update([
+                    'quantity' => $updateData['quantity'],
+                    'store_id' => $updateData['store_id'],
+                    'status' => $updateData['status'],
+                    'image' => $updateData['image'],
+                    'name' => $updateData['name'],
+                    'stock_quantity' => $updateData['stock_quantity'],
+                    'order_date' => $updateData['order_date'],
+                    'updated_at' => now(),
+                ]);
+        }
+    }
+
 }

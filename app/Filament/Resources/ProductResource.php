@@ -39,6 +39,9 @@ class ProductResource extends Resource
                     ->unique(ignoreRecord: true)
                     ->required()
                     ->maxLength(191),
+                Forms\Components\TextInput::make('image')
+                    ->label('Посилання на фото')
+                    ->maxLength(191),
                 Forms\Components\TextInput::make('stock_quantity')
                     ->label('Кіль-сть')
                     ->numeric()
@@ -62,6 +65,8 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('sku')
                     ->label('SKU')
                     ->searchable(),
+                 Tables\Columns\ImageColumn::make('image')
+                    ->height(50),
                 Tables\Columns\TextColumn::make('stock_quantity')
                     ->label('Кількість')
                     ->numeric()

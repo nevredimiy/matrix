@@ -9,6 +9,7 @@ class Product extends Model
     protected $fillable = [
         'name',
         'sku',
+        'image',
         'stock_quantity', // количество 
         'desired_stock_quantity', // желаемое количество
         'order_for_production' // сколько отгружено

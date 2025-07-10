@@ -32,6 +32,33 @@ class CreateFactoryOrder extends Page
         ])->toArray();
         // dd($this->items);
     }
+    
+
+    public function updatedItems($value, $name)
+    {
+        // $name приходит как "0.product_sku" или "1.product_sku" и т.п.
+        if (str_ends_with($name, 'product_sku')) {
+            // Получаем индекс записи (например, 0)
+            $index = intval(explode('.', $name)[0]);
+
+            $sku = $value;
+
+            // Ищем товар по артикулу
+            $product = \App\Models\Product::where('sku', $sku)->first();
+
+            if ($product) {
+                // Обновляем поля в $items для этой строки
+                $this->items[$index]['product_name'] = $product->name;
+                $this->items[$index]['image'] = $product->image;
+                $this->items[$index]['stock_quantity'] = $product->stock_quantity;
+            } else {
+                // Если товар не найден — очищаем поля
+                $this->items[$index]['product_name'] = '';
+                $this->items[$index]['image'] = null;
+                $this->items[$index]['stock_quantity'] = 0;
+            }
+        }
+    }
 
     public function save()
     {
@@ -40,9 +67,10 @@ class CreateFactoryOrder extends Page
         //     'status' => 'в процессе',
         // ]);
 
+        dd($this->items);
         foreach ($this->items as $item) {
             $product = Product::where('sku', $item['product_sku'])->first();
-            dd($product);
+            
 
             if ($product) {
                 $factoryOrder->items()->create([
@@ -55,4 +83,17 @@ class CreateFactoryOrder extends Page
         session()->flash('success', 'Заказ на производство создан!');
         return redirect()->route('filament.admin.resources.factory-orders.index');
     }
+
+    public function addEmptyItem()
+    {
+        $this->items[] = [
+            'order_id' => null,
+            'product_sku' => '',
+            'product_name' => '',
+            'image' => null,
+            'stock_quantity' => 0,
+            'quantity' => 1,
+        ];
+    }
+
 }
