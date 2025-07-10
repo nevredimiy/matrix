@@ -46,7 +46,7 @@ class ListProducts extends ListRecords
                             'name' => $product['description']['name'],
                             'sku' => $product['model'],
                             'stock_quantity' => $product['quantity'],
-                            'image' => isset($product->image) ? 'https://dinara.david-freedman.com.ua/image/' . $product->image : '',
+                            'image' => isset($product['image']) ? 'https://dinara.david-freedman.com.ua/image/' . $product['image'] : '',
                         ];
 
                         if (in_array($product['model'], $existingSkus)) {
