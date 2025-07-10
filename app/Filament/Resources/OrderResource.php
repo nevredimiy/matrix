@@ -13,6 +13,16 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\QueryBuilder\Constraints\DateConstraint;
+use Filament\Tables\Filters\QueryBuilder;
+use Filament\Tables\Filters\QueryBuilder\Constraints\SelectConstraint;
+use Filament\Tables\Filters\Filter;
+use Filament\Forms\Components\DatePicker;
+use Filament\Tables\Grouping\Group;
+
+
 
 class OrderResource extends Resource
 {
@@ -56,36 +66,80 @@ class OrderResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('order_number')
-                    ->label('Номер замовлення')
+                TextColumn::make('order_date')
+                    ->label('Дата')
+                    ->date('d.m.y H:i')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('product_sku')
+                // TextColumn::make('order_number')
+                //     ->label('Номер')
+                //     ->searchable(),
+                TextColumn::make('product_sku')
                     ->label('SKU')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('quantity')
+                TextColumn::make('quantity')
                     ->label('Кількість')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('store.name')
+                TextColumn::make('stock_quantity')
+                    ->label('На складі')
+                    ->numeric()
+                    ->sortable(),
+                TextColumn::make('name')
+                    ->label('Назва')
+                    ->searchable(),
+                Tables\Columns\ImageColumn::make('image')
+                    ->height(50),
+
+                TextColumn::make('store.name')
                     ->label('Магазин')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->label('Статус')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultGroup('order_number')
+             ->groups([
+                    Group::make('order_number')
+                        ->label('Номер замовлення'),
+                ])
+
             ->filters([
-                //
-            ])
+                Filter::make('order_date_range')
+                    ->label('Дата замовлення')
+                    ->form([
+                        DatePicker::make('order_date_from')
+                            ->label('Від'),
+                        DatePicker::make('order_date_until')
+                            ->label('До'),
+                    ])
+                    ->query(function ($query, array $data) {
+                        return $query
+                            ->when(
+                                $data['order_date_from'],
+                                fn($q) =>
+                                $q->whereDate('order_date', '>=', $data['order_date_from'])
+                            )
+                            ->when(
+                                $data['order_date_until'],
+                                fn($q) =>
+                                $q->whereDate('order_date', '<=', $data['order_date_until'])
+                            );
+                    })->columnSpan('full')->columns(2)
+            ], layout: FiltersLayout::AboveContent)
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\DeleteAction::make(),
+                ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

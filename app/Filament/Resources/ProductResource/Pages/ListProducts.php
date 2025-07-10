@@ -159,13 +159,7 @@ class ListProducts extends ListRecords
 
 
 
-<<<<<<< HEAD
-                 
-            ];
-
-=======
 
         ];
->>>>>>> 57e9457 (first)
     }
 }

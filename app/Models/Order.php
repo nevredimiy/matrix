@@ -13,7 +13,12 @@ class Order extends Model
         'product_sku',
         'quantity',
         'store_id',
-        'status'
+        'status',
+        'name',
+        'image',
+        'order_date',
+        'stock_quantity'
+
     ];
 
     public function store():BelongsTo

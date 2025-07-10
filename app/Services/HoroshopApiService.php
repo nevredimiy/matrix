@@ -87,10 +87,11 @@ class HoroshopApiService
         $token = $this->getToken();
 
         $body = array_merge(['token' => $token], $params);
-
         $response = Http::asJson()
             ->post("{$this->baseUrl}/{$method}/", $body)
             ->json();
+        
+        // dd($response);
 
         if (isset($response['status']) && in_array($response['status'], ['UNAUTHORIZED', 'AUTHORIZATION_ERROR'])) {
             throw new \Exception($response['status']);
