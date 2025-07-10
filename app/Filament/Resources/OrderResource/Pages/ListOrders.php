@@ -133,12 +133,14 @@ class ListOrders extends ListRecords
                     }
 
                     $newProducts = $this->syncProductsFromOc();
+                    $ordersForSaveCount = count($ordersForSave);
+                    $ordersForUpdateCount = count($ordersForUpdate);
+                    $archivedOrdersCount = count($archivedOrders);
 
                     // Сообщение об успехе
                     Notification::make()
                         ->title('Оновлення завершено')
-                        // ->body('Додано: ' . count($ordersForSave) . ', оновлено: ' . count($ordersForUpdate) . ', видалено: ' . count($archivedOrders))
-                        ->body("Додано: {count($ordersForSave)},\nоновлено: {count($ordersForUpdate)},\nвидалено: {count($archivedOrders)},\nДодано продуктів: {$newProducts}")
+                        ->body("Додано: {$ordersForSaveCount},\nоновлено: {$ordersForUpdateCount},\nвидалено: {$archivedOrdersCount},\nДодано продуктів: {$newProducts}")
                         ->success()
                         ->send();
                 }),
@@ -163,7 +165,7 @@ class ListOrders extends ListRecords
 
                     // dd($filtered->values()->all());
 
-                // Проверка на актуальность заказов.
+                    // Проверка на актуальность заказов.
                     $inactiveStatuses = [3, 4, 5, 6, 7, 8];
 
                     $existingOrderNumbers = DB::table('orders')
@@ -201,9 +203,9 @@ class ListOrders extends ListRecords
                             ->where('store_id', 2)
                             ->delete();
                     }
-                // Конец проверки на актуальность
+                    // Конец проверки на актуальность
 
-                // Обновляем и заполняем заказами
+                    // Обновляем и заполняем заказами
                     $allowedSkus = ['HM-155', 'HM-102', 'HM-070', 'HM-071'];
 
                     $response = app(\App\Services\HoroshopApiService::class)->getOrders([
@@ -232,8 +234,8 @@ class ListOrders extends ListRecords
                                 continue;
                             }
 
-                            $ocProduct = OcProduct::where('model',  $product['article'])->first();                            
-                            
+                            $ocProduct = OcProduct::where('model',  $product['article'])->first();
+
                             if (empty($ocProduct)) {
                                 $response = app(\App\Services\HoroshopApiService::class)->call('catalog/export', [
                                     'expr' => [
@@ -340,5 +342,4 @@ class ListOrders extends ListRecords
 
         return $newProductsCount;
     }
-
 }
