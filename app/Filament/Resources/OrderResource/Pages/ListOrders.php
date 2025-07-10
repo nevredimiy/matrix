@@ -295,6 +295,8 @@ class ListOrders extends ListRecords
                             ]);
                     }
 
+                    $this->syncProductsFromHor($allowedSkus);
+
                     Notification::make()
                         ->title('Оновлення з Хорошоп завершено')
                         ->body('Додано: ' . count($ordersForSave) . ', оновлено: ' . count($ordersForUpdate) . ', видалено ' . count($arhivedOrders))
@@ -345,6 +347,48 @@ class ListOrders extends ListRecords
         }
 
         return [$created, $updated];
+    }
+
+    protected function syncProductsFromHor($allowedSkus): array
+    {
+        $created = 0;
+        $updated = 0;
+
+        $response = app(\App\Services\HoroshopApiService::class)->call('catalog/export', [
+            'expr' => [
+                'article' => $allowedSkus, // или 'article' => 'HM-155'
+            ],
+            'limit' => 1,
+        ]);
+
+        $horProduct = $response['response']['products'][0];
+
+        foreach($horProduct as $product){
+            $sku = $product['article'];
+
+            // Данные для сохранения/обновления
+            $data = [
+                'name' => $product['title'] ?? 'Без назви',
+                'image' => empty($product['image']) ? ($product['gallery_common'] ?? '') : $product['image'],
+                'stock_quantity' => $product['quantity'] ?? 0,
+                'updated_at' => now(),
+            ];
+
+            $existing = \App\Models\Product::where('sku', $sku)->first();
+
+            if ($existing) {
+                $existing->update($data);
+                $updated++;
+            } else {
+                \App\Models\Product::create(array_merge($data, [
+                    'sku' => $sku,
+                    'created_at' => now(),
+                ]));
+                $created++;
+            }
+        }
+        return [$created, $updated];
+
     }
 
 }
