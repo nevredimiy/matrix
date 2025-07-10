@@ -132,7 +132,7 @@ class ListOrders extends ListRecords
                             ]);
                     }
 
-                    $newProducts = $this->syncProductsFromOc();
+                    [$createdProducts, $updatedProducts] = $this->syncProductsFromOc();
                     $ordersForSaveCount = count($ordersForSave);
                     $ordersForUpdateCount = count($ordersForUpdate);
                     $archivedOrdersCount = count($archivedOrders);
@@ -140,7 +140,7 @@ class ListOrders extends ListRecords
                     // Сообщение об успехе
                     Notification::make()
                         ->title('Оновлення завершено')
-                        ->body("Додано: {$ordersForSaveCount},\nоновлено: {$ordersForUpdateCount},\nвидалено: {$archivedOrdersCount},\nДодано продуктів: {$newProducts}")
+                        ->body("Додано: {$ordersForSaveCount},\nоновлено: {$ordersForUpdateCount},\nвидалено: {$archivedOrdersCount},\nДодано продуктів: {$createdProducts},\nОновлено продуктів: {$updatedProducts}")
                         ->success()
                         ->send();
                 }),
@@ -308,38 +308,42 @@ class ListOrders extends ListRecords
         ];
     }
 
-    protected function syncProductsFromOc(): int
+    protected function syncProductsFromOc(): array
     {
-        $newProductsCount = 0;
+        $created = 0;
+        $updated = 0;
 
-        // Получаем все товары из заказов OC, у которых есть связанный товар с EAN
+        // Получаем все товары из OC, у которых есть EAN
         $ocProducts = \App\Models\OcProduct::whereNotNull('ean')
             ->where('ean', '!=', '')
             ->get();
 
         foreach ($ocProducts as $product) {
-
-            // Убедимся, что у товара есть артикул (ean или model)
             $sku = $product->model;
 
-            // Если уже есть такой товар — пропускаем
-            if (\App\Models\Product::where('sku', $sku)->exists()) {
-                continue;
-            }
-
-            // Добавляем новый товар
-            \App\Models\Product::create([
-                'sku' => $sku,
+            // Данные для сохранения/обновления
+            $data = [
                 'name' => $product->name ?? 'Без назви',
-                'image' => 'https://dinara.david-freedman.com.ua/image/' . $product->image,
+                'image' => isset($product->image) ? 'https://dinara.david-freedman.com.ua/image/' . $product->image : '',
                 'quantity' => $product->quantity ?? 0,
-                'created_at' => now(),
                 'updated_at' => now(),
-            ]);
+            ];
 
-            $newProductsCount++;
+            $existing = \App\Models\Product::where('sku', $sku)->first();
+
+            if ($existing) {
+                $existing->update($data);
+                $updated++;
+            } else {
+                \App\Models\Product::create(array_merge($data, [
+                    'sku' => $sku,
+                    'created_at' => now(),
+                ]));
+                $created++;
+            }
         }
 
-        return $newProductsCount;
+        return [$created, $updated];
     }
+
 }
