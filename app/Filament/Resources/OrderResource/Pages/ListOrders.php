@@ -355,25 +355,25 @@ class ListOrders extends ListRecords
 
     protected function syncProductsFromHor($allowedSkus): array
     {
+        
         $created = 0;
         $updated = 0;
 
         $response = app(\App\Services\HoroshopApiService::class)->call('catalog/export', [
             'expr' => [
-                'article' => $allowedSkus, // или 'article' => 'HM-155'
+                'article' => ['HM-155', 'HM-102', 'HM-070', 'HM-071'], // или 'article' => 'HM-155'
             ],
-            'limit' => 1,
         ]);
 
-        $horProduct = $response['response']['products'][0];
+        $horProduct = $response['response']['products'];
 
         foreach($horProduct as $product){
             $sku = $product['article'];
 
             // Данные для сохранения/обновления
             $data = [
-                'name' => $product['title'] ?? 'Без назви',
-                'image' => empty($product['image']) ? ($product['gallery_common'] ?? '') : $product['image'],
+                'name' => $product['title']['ua'] ?? 'Без назви',
+                'image' => empty($product['images']) ? ($product['gallery_common'][0] ?? '') : $product['image'][0],
                 'stock_quantity' => $product['quantity'] ?? 0,
                 'updated_at' => now(),
             ];
