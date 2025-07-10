@@ -46,6 +46,7 @@ class ListProducts extends ListRecords
                             'name' => $product['description']['name'],
                             'sku' => $product['model'],
                             'stock_quantity' => $product['quantity'],
+                            'image' => isset($product->image) ? 'https://dinara.david-freedman.com.ua/image/' . $product->image : '',
                         ];
 
                         if (in_array($product['model'], $existingSkus)) {
@@ -65,6 +66,7 @@ class ListProducts extends ListRecords
                             ->update([
                                 'name' => $updateData['name'],
                                 'stock_quantity' => $updateData['stock_quantity'],
+                                'image' => $updateData['image'],
                             ]);
                     }
 

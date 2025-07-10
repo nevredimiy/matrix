@@ -326,7 +326,7 @@ class ListOrders extends ListRecords
             $data = [
                 'name' => $product->description->name ?? 'Без назви',
                 'image' => isset($product->image) ? 'https://dinara.david-freedman.com.ua/image/' . $product->image : '',
-                'quantity' => $product->quantity ?? 0,
+                'stock_quantity' => $product->quantity ?? 0,
                 'updated_at' => now(),
             ];
 
