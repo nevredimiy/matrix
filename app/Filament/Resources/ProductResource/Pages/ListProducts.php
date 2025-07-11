@@ -38,14 +38,14 @@ class ListProducts extends ListRecords
                     $productsForUpdate = [];
 
                     foreach ($productsOc as $product) {
+
+                        $imagePath = $product['image'];
+                        $image = 'https://dinara.david-freedman.com.ua/image/' . rawurlencode_path($imagePath);
                         $data = [
                             'name' => $product['description']['name'],
                             'sku' => $product['model'],
                             'stock_quantity' => $product['quantity'],
-                            'image' => isset($product['image'])
-                                ? 'https://dinara.david-freedman.com.ua/image/' . $this->rawurlencode_path($product['image'])
-                                : '',
-
+                            'image' => $image,
                         ];
 
                         if (in_array($product['model'], $existingSkus)) {
