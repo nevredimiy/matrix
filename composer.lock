@@ -10648,20 +10648,12 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-<<<<<<< HEAD
     "stability-flags": {},
-=======
-    "stability-flags": [],
->>>>>>> 8043c2a (first commit after rebot)
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
         "php": "^8.2"
     },
-<<<<<<< HEAD
     "platform-dev": {},
-=======
-    "platform-dev": [],
->>>>>>> 8043c2a (first commit after rebot)
     "plugin-api-version": "2.6.0"
 }
