@@ -25,4 +25,15 @@ class Order extends Model
     {
         return $this->belongsTo(Store::class);
     }
+
+    public function products()
+    {
+        return $this->hasMany(OrderProduct::class);
+    }
+
+    public function orderProducts()
+    {
+        return $this->hasMany(OrderProduct::class);
+    }
+
 }

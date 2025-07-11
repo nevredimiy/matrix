@@ -4,8 +4,9 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\OrderResource\Pages;
 use App\Filament\Resources\OrderResource\RelationManagers;
+use App\Filament\Resources\ProductsRelationManagerResource\RelationManagers\ProductsRelationManager;
 use App\Models\Order;
-use App\Models\Store;
+use App\Models\Product;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -13,17 +14,11 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Enums\FiltersLayout;
-use Filament\Tables\Filters\QueryBuilder\Constraints\DateConstraint;
-use Filament\Tables\Filters\QueryBuilder;
-use Filament\Tables\Filters\QueryBuilder\Constraints\SelectConstraint;
-use Filament\Tables\Filters\Filter;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DatePicker;
-use Filament\Tables\Grouping\Group;
-use Filament\Tables\Columns\SelectColumn;
-use Filament\Tables\Actions\BulkAction;
-use Illuminate\Database\Eloquent\Collection;
+use Filament\Forms\Components\Repeater;
+use Filament\Tables\Columns\TextColumn;
 
 class OrderResource extends Resource
 {
@@ -39,39 +34,40 @@ class OrderResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('order_number')
-                    ->label('Номер замовлення')
+                TextInput::make('order_number')
+                    ->label('Номер заказа')
                     ->required()
-                    ->maxLength(191),
-                Forms\Components\TextInput::make('product_sku')
-                    ->label('SKU')
-                    ->required()
-                    ->maxLength(191),
-                Forms\Components\TextInput::make('quantity')
-                    ->label('Кількість')
-                    ->required()
-                    ->numeric(),
-                 Forms\Components\TextInput::make('stock_quantity')
-                    ->label('На складі')
-                    ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('name')
-                    ->label('Назва'),
-                Forms\Components\TextInput::make('image')
-                    ->label('Посилання на фото'),
-                Forms\Components\DateTimePicker::make('order_date')
-                    ->label('Дата створення'),
-                Forms\Components\Select::make('store_id')
+                    ->unique(ignoreRecord: true),
+
+                Select::make('store_id')
                     ->label('Магазин')
-                    ->options(Store::pluck('name', 'id')->toArray())
+                    ->relationship('store', 'name')
+                    ->searchable()
                     ->required(),
-                Forms\Components\Select::make('status')
-                    ->label('Статус')
-                    ->options([
-                        'pending' => 'В ожидании',
-                        'new' => 'Новый'
+
+                DatePicker::make('order_date')
+                    ->label('Дата заказа')
+                    ->default(now())
+                    ->required(),
+
+                Repeater::make('products')
+                    ->relationship() // указывает что это hasMany по products
+                    ->label('Товары')
+                    ->schema([
+                        Select::make('product_id')
+                            ->label('Товар')
+                            ->options(Product::query()->pluck('name', 'id'))
+                            ->searchable()
+                            ->required(),
+                        TextInput::make('quantity')
+                            ->label('Количество')
+                            ->numeric()
+                            ->minValue(1)
+                            ->required(),
                     ])
-                    ->default('pending'),
+                    ->required()
+                    ->columnSpanFull()
+                    ->createItemButtonLabel('Добавить товар'),
             ]);
     }
 
@@ -79,107 +75,19 @@ class OrderResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('order_date')
-                    ->label('Дата')
-                    ->date('d.m.y H:i')
-                    ->searchable(),
-                // TextColumn::make('order_number')
-                //     ->label('Номер')
-                //     ->searchable(),
-                TextColumn::make('product_sku')
-                    ->label('SKU')
-                    ->searchable(),
-                TextColumn::make('quantity')
-                    ->label('Кількість')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('stock_quantity')
-                    ->label('На складі')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('name')
-                    ->label('Назва')
-                    ->searchable(),
-                Tables\Columns\ImageColumn::make('image')
-                    ->height(50),
-
-                TextColumn::make('store.name')
-                    ->label('Магазин')
-                    ->sortable(),
-                TextColumn::make('status')
-                    ->badge()
-                    // ->color(fn (string $state): string => match ($state) {
-                    //     'pending' => 'success',
-                    //     'new' => 'warning',
-                    // })
-                    ->label('Статус')
-                    ->searchable(),
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('order_number')->label('Номер заказа')->sortable()->searchable(),
+                TextColumn::make('store.name')->label('Магазин')->sortable()->searchable(),
+                TextColumn::make('status')->label('Статус')->sortable()->toggleable(),
+                TextColumn::make('order_date')->label('Дата заказа')->date()->sortable(),
+                TextColumn::make('products_count')->counts('products')->label('Количество товаров'),
             ])
-            ->defaultGroup('order_number')
-             ->groups([
-                    Group::make('order_number')
-                        ->label('Номер замовлення'),
-                ])
-
-            ->filters([
-                Filter::make('order_date_range')
-                    ->label('Дата замовлення')
-                    ->form([
-                        DatePicker::make('order_date_from')
-                            ->label('Від'),
-                        DatePicker::make('order_date_until')
-                            ->label('До'),
-                    ])
-                    ->query(function ($query, array $data) {
-                        return $query
-                            ->when(
-                                $data['order_date_from'],
-                                fn($q) =>
-                                $q->whereDate('order_date', '>=', $data['order_date_from'])
-                            )
-                            ->when(
-                                $data['order_date_until'],
-                                fn($q) =>
-                                $q->whereDate('order_date', '<=', $data['order_date_until'])
-                            );
-                    })->columnSpan('full')->columns(2)
-            ], layout: FiltersLayout::AboveContent)
-            ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\ViewAction::make(),
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\DeleteAction::make(),
-                ]),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-                BulkAction::make('createFactoryOrder')
-                ->label('Создать заказ на производство')
-                ->action(function (Collection $records, array $data) {
-                    // Сохраняем ID заказов во временное хранилище (например, сессия)
-                    session(['selected_order_ids' => $records->pluck('id')->toArray()]);
-
-                    // редирект на кастомную страницу формы
-                    return redirect()->route('filament.admin.pages.create-factory-order');
-                })
-                ->requiresConfirmation()
-            ]);
+            ->defaultSort('order_date', 'desc');
     }
 
     public static function getRelations(): array
     {
         return [
-            //
+            ProductsRelationManager::class,
         ];
     }
 
