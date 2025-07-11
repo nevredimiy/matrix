@@ -28,7 +28,7 @@ class ListOrderStatuses extends ListRecords
                     $statuses = OrderStatus::pluck('Identifier')->toArray();
                     $forUpdate = [];
                     $forSave = [];
-                    dump($ocStatuses);
+
                     foreach($ocStatuses as $ocStatus){
 
                         $data = [
@@ -46,9 +46,7 @@ class ListOrderStatuses extends ListRecords
 
                     // Создаем новые статусы
                     if(!empty($forSave)){
-                        foreach($forSave as $data){
-                            OrderStatus::create($data);
-                        }
+                        OrderStatus::create($data);
                     }
 
                     // Обновляем существующие

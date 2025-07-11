@@ -49,8 +49,7 @@ class OrderStatusResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('store_id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('store.name')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('identifier')
                     ->numeric()
