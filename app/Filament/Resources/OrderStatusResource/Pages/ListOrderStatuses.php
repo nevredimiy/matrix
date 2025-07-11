@@ -28,9 +28,11 @@ class ListOrderStatuses extends ListRecords
                     $statuses = OrderStatus::pluck('Identifier')->toArray();
                     $forUpdate = [];
                     $forSave = [];
+                    dump($ocStatuses);
                     foreach($ocStatuses as $ocStatus){
+
                         $data = [
-                            'name' => $ocStatus->name,
+                            'name' => $ocStatus->name ?? '',
                             'store_id' => 1, // ocStore
                             'identifier' => $ocStatus->order_status_id,
                             'is_active' => 0
