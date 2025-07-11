@@ -40,7 +40,7 @@ class ListProducts extends ListRecords
                     foreach ($productsOc as $product) {
 
                         $imagePath = $product['image'];
-                        $image = 'https://dinara.david-freedman.com.ua/image/' . rawurlencode_path($imagePath);
+                        $image = 'https://dinara.david-freedman.com.ua/image/' . $this->rawurlencode_path($imagePath);
                         $data = [
                             'name' => $product['description']['name'],
                             'sku' => $product['model'],
@@ -81,9 +81,7 @@ class ListProducts extends ListRecords
                 ->color('info')
                 ->requiresConfirmation()
                 ->icon('heroicon-o-arrow-down-tray')
-                ->action(function () {
-                    
-                }),
+                ->action(function () {}),
 
             Actions\CreateAction::make(),
         ];
@@ -93,5 +91,4 @@ class ListProducts extends ListRecords
     {
         return implode('/', array_map('rawurlencode', explode('/', $path)));
     }
-
 }
