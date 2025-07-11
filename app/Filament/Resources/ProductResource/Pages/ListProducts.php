@@ -43,9 +43,8 @@ class ListProducts extends ListRecords
                             'sku' => $product['model'],
                             'stock_quantity' => $product['quantity'],
                             'image' => isset($product['image'])
-                                ? 'https://dinara.david-freedman.com.ua/image/' . implode('/', array_map('rawurlencode', explode('/', $product['image'])))
+                                ? 'https://dinara.david-freedman.com.ua/image/' . $this->rawurlencode_path($product['image'])
                                 : '',
-
 
                         ];
 
@@ -89,4 +88,10 @@ class ListProducts extends ListRecords
             Actions\CreateAction::make(),
         ];
     }
+
+    function rawurlencode_path($path)
+    {
+        return implode('/', array_map('rawurlencode', explode('/', $path)));
+    }
+
 }
