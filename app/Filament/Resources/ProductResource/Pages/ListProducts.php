@@ -18,8 +18,8 @@ class ListProducts extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('update_products')
-                ->label('Оновити товари')
+            Action::make('update_products_oc')
+                ->label('Оновити товари OpenCart')
                 ->color('success')
                 ->requiresConfirmation()
                 ->icon('heroicon-o-arrow-down-tray')
@@ -42,7 +42,11 @@ class ListProducts extends ListRecords
                             'name' => $product['description']['name'],
                             'sku' => $product['model'],
                             'stock_quantity' => $product['quantity'],
-                            'image' => isset($product['image']) ? 'https://dinara.david-freedman.com.ua/image/' . $product['image'] : '',
+                            'image' => isset($product['image'])
+                                ? 'https://dinara.david-freedman.com.ua/image/' . implode('/', array_map('rawurlencode', explode('/', $product['image'])))
+                                : '',
+
+
                         ];
 
                         if (in_array($product['model'], $existingSkus)) {
@@ -72,6 +76,14 @@ class ListProducts extends ListRecords
                         ->body('Додано: ' . count($productsForSave) . ', оновлено: ' . count($productsForUpdate))
                         ->success()
                         ->send();
+                }),
+            Action::make('update_products')
+                ->label('Оновити товари Horoshop')
+                ->color('info')
+                ->requiresConfirmation()
+                ->icon('heroicon-o-arrow-down-tray')
+                ->action(function () {
+                    
                 }),
 
             Actions\CreateAction::make(),

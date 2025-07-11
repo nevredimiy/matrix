@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\FactoryOrderItem;
 
 class FactoryOrder extends Model
 {
@@ -14,5 +15,10 @@ class FactoryOrder extends Model
     public function factory()
     {
         return $this->belongsTo(Factory::class);
+    }
+
+    public function items()
+    {
+        return $this->hasMany(FactoryOrderItem::class);
     }
 }
