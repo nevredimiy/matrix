@@ -89,7 +89,7 @@ class ListProducts extends ListRecords
         ];
     }
 
-    function rawurlencode_path($path)
+    public function rawurlencode_path($path)
     {
         return implode('/', array_map('rawurlencode', explode('/', $path)));
     }
