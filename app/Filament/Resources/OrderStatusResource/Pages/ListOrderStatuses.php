@@ -24,11 +24,11 @@ class ListOrderStatuses extends ListRecords
                 // ->requiresConfirmation()
                 ->icon('heroicon-o-arrow-down-tray')
                 ->action(function () {
-                    $ocStatuses = OcOrderStatus::all();
+                    $ocStatuses = OcOrderStatus::where('language_id', 5)->get(); // 5 -укр. яз., 1 - рус. яз.
                     $statuses = OrderStatus::pluck('Identifier')->toArray();
                     $forUpdate = [];
                     $forSave = [];
-
+                    
                     foreach($ocStatuses as $ocStatus){
 
                         $data = [
@@ -46,7 +46,9 @@ class ListOrderStatuses extends ListRecords
 
                     // Создаем новые статусы
                     if(!empty($forSave)){
-                        OrderStatus::create($data);
+                        foreach($forSave as $data){
+                            OrderStatus::create($data);
+                        }
                     }
 
                     // Обновляем существующие
