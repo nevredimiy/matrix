@@ -22,9 +22,9 @@ class OrderStatusResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $navigationLabel = 'Статусы заказов';
+    protected static ?string $navigationLabel = 'Статуси замовлення';
 
-    protected static ?string $navigationGroup = 'Допоміжна';
+    protected static ?string $navigationGroup = 'Налаштування';
 
     public static function form(Form $form): Form
     {
@@ -46,15 +46,20 @@ class OrderStatusResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->description('ВИКЛЮЧЕННЯ СТАТУСУ означає, що замовлення з таким статусом НЕ РОЗГЛЯДАЄТЬСЯ')
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->searchable(),
+                    ->searchable()
+                    ->label('Назва'),
                 Tables\Columns\TextColumn::make('store.name')
-                    ->sortable(),
+                    ->sortable()
+                    ->label('Магазин'),
                 Tables\Columns\TextColumn::make('identifier')
                     ->numeric()
-                    ->sortable(),
-                ToggleColumn::make('is_active'),
+                    ->sortable()
+                    ->label('ID статусу'),
+                ToggleColumn::make('is_active')
+                    ->label('Вкл/Викл'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

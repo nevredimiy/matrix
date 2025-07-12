@@ -16,6 +16,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Actions\Action;
 use Illuminate\Support\Facades\Http;
 use Filament\Notifications\Notification;
+use Filament\Tables\Columns\ToggleColumn;
+use Filament\Forms\Components\Toggle;
 
 class ProductResource extends Resource
 {
@@ -23,9 +25,9 @@ class ProductResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $navigationLabel = 'Товары';
+    protected static ?string $navigationLabel = 'Товари';
 
-    protected static ?string $navigationGroup = 'Головна';
+    protected static ?string $navigationGroup = 'Налаштування';
 
     public static function form(Form $form): Form
     {
@@ -52,6 +54,8 @@ class ProductResource extends Resource
                     ->numeric()
                     ->default(0)
                     ->minLength(0),
+                Toggle::make('is_active')
+                        ->label('Вкл/Викл'),
             ]);
     }
 
@@ -75,6 +79,9 @@ class ProductResource extends Resource
                     ->label('Бажана кіль-сть')
                     ->numeric()
                     ->sortable(),
+                ToggleColumn::make('is_active')
+                    ->label('Вкл/Викл'),
+                
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

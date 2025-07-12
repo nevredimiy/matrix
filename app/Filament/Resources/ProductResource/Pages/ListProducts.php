@@ -46,6 +46,7 @@ class ListProducts extends ListRecords
                             'sku' => $product['model'],
                             'stock_quantity' => $product['quantity'],
                             'image' => $image,
+                            'product_id_oc' => $product['id']
                         ];
 
                         if (in_array($product['model'], $existingSkus)) {
@@ -66,6 +67,7 @@ class ListProducts extends ListRecords
                                 'name' => $updateData['name'],
                                 'stock_quantity' => $updateData['stock_quantity'],
                                 'image' => $updateData['image'],
+                                'product_id_oc' => $product['id']
                             ]);
                     }
 

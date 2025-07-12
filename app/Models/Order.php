@@ -36,4 +36,9 @@ class Order extends Model
         return $this->hasMany(OrderProduct::class);
     }
 
+    public function orderStatus()
+    {
+        return $this->belongsTo(OrderStatus::class, 'order_status_identifier', 'identifier' );
+    }
+
 }
