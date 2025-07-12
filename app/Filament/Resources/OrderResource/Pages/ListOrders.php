@@ -65,6 +65,7 @@ class ListOrders extends ListRecords
         // Заказы из OpenCart, у которых статус в списке неактивных
         $ocOrdersToArchive = OcOrder::whereIn('order_id', $existingOrderNumbers)
             ->whereIn('order_status_id', $inactiveStatuses)
+            ->where('language_id', 5)
             ->get();
 
         if ($ocOrdersToArchive->isEmpty()) {
@@ -111,13 +112,14 @@ class ListOrders extends ListRecords
     // Добавление и обновление заказов
     public function updateOrders(array $inactiveStatuses, array $existingOrderNumbers): array
     {
-        // 1. OC‑ID всех активных продуктов
+        // OC‑ID всех активных продуктов
         $activeOcProductIds = Product::where('is_active', 1)
             ->pluck('product_id_oc')
             ->toArray();
 
-        // 2. Заказы OC, где есть активные товары и статус ≠ архив
+        // Заказы OC, где есть активные товары и статус ≠ архив
         $ocOrders = OcOrder::with('products')
+            ->where('language_id', 5)
             ->whereHas('products', fn($q) => $q->whereIn('product_id', $activeOcProductIds))
             ->whereNotIn('order_status_id', $inactiveStatuses)
             ->get();

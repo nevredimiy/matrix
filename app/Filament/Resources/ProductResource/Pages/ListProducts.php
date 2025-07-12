@@ -24,7 +24,7 @@ class ListProducts extends ListRecords
                 ->requiresConfirmation()
                 ->icon('heroicon-o-arrow-down-tray')
                 ->action(function () {
-                    $this->updateProductsOc();
+                    $this->updateOcProducts();
                 }),
             Action::make('update_products')
                 ->label('Оновити товари Horoshop')
@@ -42,21 +42,20 @@ class ListProducts extends ListRecords
         return implode('/', array_map('rawurlencode', explode('/', $path)));
     }
 
-    public function updateProductsOc()
+    public function updateOcProducts()
     {
         $existingProductIds = Product::where('is_active', 1)
             ->pluck('product_id_oc')
             ->toArray();
 
-        $productsOc = OcProduct::query()
-            ->with('description')
+        $ocProducts = OcProduct::with(['description' => fn($q) => $q->where('language_id', 5)])
             ->get()
             ->toArray();
 
         $productsForSave = [];
         $productsForUpdate = [];
 
-        foreach ($productsOc as $product) {
+        foreach ($ocProducts as $product) {
 
             $imagePath = $product['image'];
             $image = 'https://dinara.david-freedman.com.ua/image/' . $this->rawurlencode_path($imagePath);
