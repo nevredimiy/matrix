@@ -77,7 +77,7 @@ class ListOrders extends ListRecords
             ->whereIn('order_number', $ocOrdersToArchive->pluck('order_id'))
             ->get();
 
-        // Данные для archived_orders
+        // Данные для arhived_orders
         $archiveRows = $orders->map(function (Order $order) {
             $skus = $order->orderProducts
                 ->map(fn ($op) => $op->product->sku)
@@ -98,7 +98,7 @@ class ListOrders extends ListRecords
         DB::transaction(function () use ($archiveRows, $ocOrdersToArchive) {
 
             // insertOrIgnore → если метод вызовется повторно, дубликаты игнорируются
-            DB::table('archived_orders')->insertOrIgnore($archiveRows);
+            DB::table('arhived_orders')->insertOrIgnore($archiveRows);
 
             Order::where('store_id', 1)
                 ->whereIn('order_number', $ocOrdersToArchive->pluck('order_id'))
