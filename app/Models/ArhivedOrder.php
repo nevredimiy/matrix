@@ -8,9 +8,8 @@ class ArhivedOrder extends Model
 {
     protected $fillable = [
         'order_number',
-        'product_sku',
-        'quantity',
         'store_id',
-        'status'
+        'status_order',
+        'product_skues',
     ];
 }

@@ -95,6 +95,7 @@ class ListOrders extends ListRecords
         Order::where('store_id', 1)
             ->whereIn('order_number', $ocOrdersToArchive->pluck('order_id'))
             ->delete();
+            
 
         return $archiveRows;
 

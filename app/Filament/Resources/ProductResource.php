@@ -54,6 +54,12 @@ class ProductResource extends Resource
                     ->numeric()
                     ->default(0)
                     ->minLength(0),
+                Forms\Components\TextInput::make('product_id_oc')
+                    ->label('ID товару на OC')
+                    ->numeric(),
+                Forms\Components\TextInput::make('product_id_hor')
+                    ->label('ID товару на Hor')
+                    ->numeric(),
                 Toggle::make('is_active')
                         ->label('Вкл/Викл'),
             ]);
