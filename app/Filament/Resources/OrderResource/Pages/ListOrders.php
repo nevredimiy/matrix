@@ -21,7 +21,7 @@ class ListOrders extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-             Action::make('update_orders_oc')
+            Action::make('update_orders_oc')
                 ->label('Оновити замовлення з OC')
                 ->color('success')
                 ->requiresConfirmation()
@@ -64,7 +64,7 @@ class ListOrders extends ListRecords
     {
         // Заказы из OpenCart, у которых статус в списке неактивных
         $ocOrdersToArchive = OcOrder::whereIn('order_id', $existingOrderNumbers)
-            ->whereIn('order_status_id', $inactiveStatuses) 
+            ->whereIn('order_status_id', $inactiveStatuses)
             ->get();
 
         if ($ocOrdersToArchive->isEmpty()) {
@@ -79,8 +79,8 @@ class ListOrders extends ListRecords
 
         // Данные для arhived_orders
         $archiveRows = $orders->map(function (Order $order) {
-            $skus = $order->orderProducts
-                ->map(fn ($op) => $op->product->sku)
+            $skues = $order->orderProducts
+                ->map(fn($op) => $op->product->sku)
                 ->filter()
                 ->implode(',');
 
@@ -88,7 +88,7 @@ class ListOrders extends ListRecords
                 'order_number' => $order->order_number,
                 'store_id'     => $order->store_id,
                 'status'       => $order->orderStatus?->name ?? 'архів',
-                'product_skus' => $skus,           // убедись, что колонка TEXT
+                'product_skues' => $skues,           // убедись, что колонка TEXT
                 'created_at'   => now(),
                 'updated_at'   => now(),
             ];
@@ -118,7 +118,7 @@ class ListOrders extends ListRecords
 
         // 2. Заказы OC, где есть активные товары и статус ≠ архив
         $ocOrders = OcOrder::with('products')
-            ->whereHas('products', fn ($q) => $q->whereIn('product_id', $activeOcProductIds))
+            ->whereHas('products', fn($q) => $q->whereIn('product_id', $activeOcProductIds))
             ->whereNotIn('order_status_id', $inactiveStatuses)
             ->get();
 
@@ -161,7 +161,7 @@ class ListOrders extends ListRecords
                 }
 
                 $itemPayload = [
-                    'order_number' => $ocOrder->order_id, 
+                    'order_number' => $ocOrder->order_id,
                     'product_id'   => $localProductId,
                     'quantity'     => $ocProduct->quantity,
                     'updated_at'   => now(),
@@ -203,7 +203,7 @@ class ListOrders extends ListRecords
             if ($ordersForUpdate) {
                 DB::table('orders')->upsert(
                     $ordersForUpdate,
-                    ['order_number', 'store_id'],            
+                    ['order_number', 'store_id'],
                     ['status', 'order_status_identifier', 'order_date', 'updated_at']
                 );
             }
