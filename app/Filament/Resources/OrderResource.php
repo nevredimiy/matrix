@@ -67,7 +67,7 @@ class OrderResource extends Resource
                     ])
                     ->required()
                     ->columnSpanFull()
-                    ->createItemButtonLabel('Добавить товар'),
+                    ->createItemButtonLabel('Додати товар'),
             ]);
     }
 
@@ -81,7 +81,15 @@ class OrderResource extends Resource
                 TextColumn::make('order_date')->label('Дата заказа')->date()->sortable(),
                 TextColumn::make('products_count')->counts('products')->label('Количество товаров'),
             ])
-            ->defaultSort('order_date', 'desc');
+            ->defaultSort('order_date', 'desc')
+            ->filters([
+                //
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ]);
     }
 
     public static function getRelations(): array
