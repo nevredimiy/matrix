@@ -47,7 +47,6 @@ class ListProducts extends ListRecords
         $existingProductIds = Product::where('is_active', 1)
             ->pluck('product_id_oc')
             ->toArray();
-        dd($existingProductIds);
 
         $productsOc = OcProduct::query()
             ->with('description')
@@ -70,7 +69,7 @@ class ListProducts extends ListRecords
                 'is_active' => true
             ];
 
-            if (in_array($product['product_id_oc'], $existingProductIds)) {
+            if (in_array($product['product_id'], $existingProductIds)) {
                 $productsForUpdate[] = $data;
             } else {
                 $productsForSave[] = $data;
@@ -98,6 +97,5 @@ class ListProducts extends ListRecords
             ->body('Додано: ' . count($productsForSave) . ', оновлено: ' . count($productsForUpdate))
             ->success()
             ->send();
-
     }
 }

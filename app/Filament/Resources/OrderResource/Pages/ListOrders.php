@@ -28,163 +28,201 @@ class ListOrders extends ListRecords
                 ->icon('heroicon-o-arrow-down-tray')
                 ->action(function () {
 
-                    // Берём **НЕактивные** статусы OpenCart, сохранённые в нашей БД
-                    $inactiveStatuses = OrderStatus::where('is_active', 0)->pluck('identifier')->toArray();                    
-        
-                    // Все номера заказов, уже присутствующие в таблице orders (магазин = ocStore)
-                    $existingOrderIds = Order::where('store_id', 1) // 1 - ocstore
+                    // Неактивні статуси
+                    $inactiveStatuses = OrderStatus::where('is_active', 0)
+                        ->pluck('identifier')
+                        ->toArray();
+
+                    // Номери вже існуючих замовлень
+                    $existingOrderNumbers = Order::where('store_id', 1)
                         ->pluck('order_number')
-                        ->all();
+                        ->toArray();
 
-                    $archiveRows = $this->updateOrderStatuses($inactiveStatuses, $existingOrderIds);
-                    $this->updateOrders($inactiveStatuses, $existingOrderIds);
+                    // Архівування/видалення
+                    $archivedRows = $this->updateOrderStatuses($inactiveStatuses, $existingOrderNumbers);
 
+                    // Синхронізація замовлень
+                    [$ordersForInsert, $ordersForUpdate] = $this->updateOrders($inactiveStatuses, $existingOrderNumbers);
 
-                    // Сообщение об успехе
+                    // Підрахунок
+                    $archivedCount      = is_countable($archivedRows)      ? count($archivedRows)      : 0;
+                    $insertedCount      = is_countable($ordersForInsert)   ? count($ordersForInsert)   : 0;
+                    $updatedCount       = is_countable($ordersForUpdate)   ? count($ordersForUpdate)   : 0;
+
+                    // Повідомлення
                     Notification::make()
                         ->title('Оновлення завершено')
-                        // ->body("Додано: {$ordersForSaveCount},\nоновлено: {$ordersForUpdateCount},\nвидалено: {$archiveRows}")
-                        ->body("Додано: {видалено: {$archiveRows}")
-                        ->success()
-                        ->send();
+                        ->body("Додано: {$insertedCount},\nоновлено: {$updatedCount},\nвидалено: {$archivedCount}")
+                        ->success();
                 }),
 
             Actions\CreateAction::make(),
         ];
     }
 
-    public function updateOrderStatuses($inactiveStatuses, $existingOrderIds): array
+    public function updateOrderStatuses(array $inactiveStatuses, array $existingOrderNumbers): array
     {
-       
-        // На стороне OpenCart ищем те же заказы, у которых статус не включен
-        $ocOrdersToArchive = OcOrder::whereIn('order_id', $existingOrderIds)
-            ->whereIn('order_status_id',  $inactiveStatuses)
+        // Заказы из OpenCart, у которых статус в списке неактивных
+        $ocOrdersToArchive = OcOrder::whereIn('order_id', $existingOrderNumbers)
+            ->whereIn('order_status_id', $inactiveStatuses) 
             ->get();
-        
+
         if ($ocOrdersToArchive->isEmpty()) {
-            return array($ocOrdersToArchive); // Архивировать нечего
+            return []; // нечего архивировать
         }
 
-        // Забираем сразу все нужные заказы с их товарами
-        $orders = Order::with(['orderProducts.product', 'orderStatus'])   // product → relation, чтобы достать sku
+        // Наши заказы + товары
+        $orders = Order::with(['orderProducts.product', 'orderStatus'])
             ->where('store_id', 1)
             ->whereIn('order_number', $ocOrdersToArchive->pluck('order_id'))
             ->get();
 
-        // Готовим bulk‑insert в archived_orders
+        // Данные для archived_orders
         $archiveRows = $orders->map(function (Order $order) {
-            // Все SKU через запятую
             $skus = $order->orderProducts
-                ->map(fn ($op) => $op->product->sku ?? null)
+                ->map(fn ($op) => $op->product->sku)
                 ->filter()
                 ->implode(',');
 
             return [
-                'order_number'  => $order->order_number,
-                'store_id'      => $order->store_id,
-                'status'        => $order->orderStatus?->name,          // или передавай реальный текст статуса
-                'product_skus'  => $skus,
-                'created_at'    => now(),
-                'updated_at'    => now(),
+                'order_number' => $order->order_number,
+                'store_id'     => $order->store_id,
+                'status'       => $order->orderStatus?->name ?? 'архів',
+                'product_skus' => $skus,           // убедись, что колонка TEXT
+                'created_at'   => now(),
+                'updated_at'   => now(),
             ];
         })->all();
 
-        // Сохраняем и удаляем заказы «одним махом»
-        DB::table('archived_orders')->insert($archiveRows);
+        // Сохраняем и удаляем в одной транзакции
+        DB::transaction(function () use ($archiveRows, $ocOrdersToArchive) {
 
-        Order::where('store_id', 1)
-            ->whereIn('order_number', $ocOrdersToArchive->pluck('order_id'))
-            ->delete();
-            
+            // insertOrIgnore → если метод вызовется повторно, дубликаты игнорируются
+            DB::table('archived_orders')->insertOrIgnore($archiveRows);
+
+            Order::where('store_id', 1)
+                ->whereIn('order_number', $ocOrdersToArchive->pluck('order_id'))
+                ->delete();
+        });
 
         return $archiveRows;
-
     }
 
     // Добавление и обновление заказов
-    public function updateOrders($inactiveStatuses, $existingOrderIds)
+    public function updateOrders(array $inactiveStatuses, array $existingOrderNumbers): array
     {
+        // 1. OC‑ID всех активных продуктов
+        $activeOcProductIds = Product::where('is_active', 1)
+            ->pluck('product_id_oc')
+            ->toArray();
 
-        $activeProducts = Product::where('is_active', 1)->pluck('sku')->toArray();
-
-        $ocOrders = OcOrder::whereHas('products.product', function ($query) use ($activeProducts) {
-            $query->whereIn('model', $activeProducts);
-        })
-            ->with(['products'])
+        // 2. Заказы OC, где есть активные товары и статус ≠ архив
+        $ocOrders = OcOrder::with('products')
+            ->whereHas('products', fn ($q) => $q->whereIn('product_id', $activeOcProductIds))
             ->whereNotIn('order_status_id', $inactiveStatuses)
             ->get();
-        
-        $ordersForSave = [];
-        $ordersForUpdate = [];
 
-        $dataOrder= [];
-        $dataOrderProduct = [];
-        
-        
-        
-        foreach ($ocOrders as $order) {
-            
-            $dataOrder = [
-                'order_number' => $order->order_id,
-                'store_id' =>  1, // OcStore
-                'status'  =>  'відкритий',
-                'order_status_identifier' => $order->order_status_id,
-                // 'image' => 'https://dinara.david-freedman.com.ua/image/' . $product->product->image,
-                // 'name' => $product->name,
-                // 'stock_quantity' => $product->product->quantity,
-                'order_date' => $order->date_added,
-                'created_at' => now(),
-                'updated_at' => now()
+        // Буферы bulk‑операций
+        $ordersForInsert  = [];
+        $ordersForUpdate  = [];
+        $orderProductsInsert = [];   // для новых заказов
+        $orderProductsUpsert = [];   // для существующих заказов
+
+        foreach ($ocOrders as $ocOrder) {
+
+            // Данные заказа
+            $orderPayload = [
+                'order_number'            => $ocOrder->order_id,
+                'store_id'                => 1,
+                'status'                  => 'відкритий',
+                'order_status_identifier' => $ocOrder->order_status_id,
+                'order_date'              => $ocOrder->date_added,
+                'updated_at'              => now(),
             ];
 
-            foreach ($order->products as $product) {
-                $dataOrderProduct = [
-                    'sku' => $product->model,
-                    'quantity' => $product->quantity,
-                    'product_id_oc' => $product->id,
-                    
-                    // 'order_id' => '',
-                    // 'product_id' => ,
-                    // 'quantity' => 
+            $isExisting = in_array($ocOrder->order_id, $existingOrderNumbers, true);
+
+            if ($isExisting) {
+                // Обновим сам заказ
+                $ordersForUpdate[] = $orderPayload + ['created_at' => now()]; // created_at не изменится, но upsert требует
+            } else {
+                // Сохраним новый
+                $ordersForInsert[] = $orderPayload + ['created_at' => now()];
+            }
+
+            // --- Синхронизация товаров заказа ---
+            $currentProductIds = [];
+
+            foreach ($ocOrder->products as $ocProduct) {
+                // локальный ID продукта
+                $localProductId = Product::where('product_id_oc', $ocProduct->product_id)->value('id');
+                if (!$localProductId) {
+                    continue; // продукт ещё не завели
+                }
+
+                $itemPayload = [
+                    'order_number' => $ocOrder->order_id, 
+                    'product_id'   => $localProductId,
+                    'quantity'     => $ocProduct->quantity,
+                    'updated_at'   => now(),
+                    'created_at'   => now(),
                 ];
 
+                $currentProductIds[] = $localProductId;
+
+                // если заказ новый → просто insert
+                if ($isExisting) {
+                    $orderProductsUpsert[] = $itemPayload;
+                } else {
+                    $orderProductsInsert[] = $itemPayload;
+                }
             }
-            
-            // if (in_array($order['order_id'], $existingOrderIds)) {
-            //     $ordersForUpdate[] = $data;
-            // } else {
-            //     $ordersForSave[] = $data;
-            // }
+
+            // Если заказ существующий — удалим из order_products лишние позиции
+            if ($isExisting && $currentProductIds) {
+                DB::table('order_products')
+                    ->where('order_number', $ocOrder->order_id)
+                    ->whereNotIn('product_id', $currentProductIds)
+                    ->delete();
+            }
         }
 
-        dump($ocOrders);
-        dump($dataOrder);
-        dump($dataOrderProduct);
-        // dd($ordersForUpdate);
+        // --- Выполняем всё одной транзакцией ---
+        DB::transaction(function () use (
+            $ordersForInsert,
+            $ordersForUpdate,
+            $orderProductsInsert,
+            $orderProductsUpsert
+        ) {
+            // Новые заказы
+            if ($ordersForInsert) {
+                DB::table('orders')->insert($ordersForInsert);
+            }
 
-        // if (!empty($ordersForSave)) {
-        //     DB::table('orders')->insert($ordersForSave);
-        // }
+            // Обновление заказов
+            if ($ordersForUpdate) {
+                DB::table('orders')->upsert(
+                    $ordersForUpdate,
+                    ['order_number', 'store_id'],            
+                    ['status', 'order_status_identifier', 'order_date', 'updated_at']
+                );
+            }
 
-        // foreach ($ordersForUpdate as $updateData) {
-        //     DB::table('orders')
-        //         ->where('order_number', $updateData['order_number'])
-        //         ->where('product_sku', $updateData['product_sku']) // уточнение
-        //         ->update([
-        //             'quantity' => $updateData['quantity'],
-        //             'store_id' => $updateData['store_id'],
-        //             'status' => $updateData['status'],
-        //             'image' => $updateData['image'],
-        //             'name' => $updateData['name'],
-        //             'stock_quantity' => $updateData['stock_quantity'],
-        //             'order_date' => $updateData['order_date'],
-        //             'updated_at' => now(),
-        //         ]);
-        // }
+            // Товары новых заказов
+            if ($orderProductsInsert) {
+                DB::table('order_products')->insert($orderProductsInsert);
+            }
 
-        // [$createdProducts, $updatedProducts] = $this->syncProductsFromOc();
-        // $ordersForSaveCount = count($ordersForSave);
-        // $ordersForUpdateCount = count($ordersForUpdate);
-        // $archivedOrdersCount = count($archivedOrders);
+            // Товары существующих заказов (upsert по составному ключу)
+            if ($orderProductsUpsert) {
+                DB::table('order_products')->upsert(
+                    $orderProductsUpsert,
+                    ['order_number', 'product_id'],          // уникальный ключ
+                    ['quantity', 'updated_at']
+                );
+            }
+        });
+
+        return [$ordersForInsert, $ordersForUpdate];
     }
 }

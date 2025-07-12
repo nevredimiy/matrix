@@ -71,7 +71,8 @@ class ProductResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->label('Назва')
-                    ->searchable(),
+                    ->searchable()
+                    ->limit(40),
                 Tables\Columns\TextColumn::make('sku')
                     ->label('SKU')
                     ->searchable(),
