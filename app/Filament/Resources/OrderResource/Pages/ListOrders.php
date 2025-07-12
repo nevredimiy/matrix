@@ -87,7 +87,7 @@ class ListOrders extends ListRecords
             return [
                 'order_number' => $order->order_number,
                 'store_id'     => $order->store_id,
-                'status'       => $order->orderStatus?->name ?? 'архів',
+                'status_order'       => $order->orderStatus?->name ?? 'архів',
                 'product_skues' => $skues,           // убедись, что колонка TEXT
                 'created_at'   => now(),
                 'updated_at'   => now(),
