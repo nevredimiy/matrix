@@ -103,12 +103,13 @@ class ListProducts extends ListRecords
     public function updateHorProducts()
     {
         $existingProductIds = Product::where('is_active', 1)
-            ->pluck('product_id_hor')
+            ->pluck('sku')
             ->toArray();
 
         $response = app(\App\Services\HoroshopApiService::class)->call('catalog/export', [
             'expr' => [
-                'display_in_showcase' => 1
+                'display_in_showcase' => 1,
+                'article' => $existingProductIds
             ]
         ]);
         dd($response);
