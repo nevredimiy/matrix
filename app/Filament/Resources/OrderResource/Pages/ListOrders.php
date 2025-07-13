@@ -29,9 +29,15 @@ class ListOrders extends ListRecords
                 ->action(function () {
 
                     // Неактивні статуси
-                    $inactiveStatuses = OrderStatus::where('is_active', 0)
-                        ->pluck('identifier')
+                    $inactiveStatuses = OrderStatus::where('store_id', 1) // 1 - ocstore
+                        ->where('is_active', 0)
+                        ->pluck('identifier')                        
                         ->toArray();
+
+                    // Добавить статус 0  - это незавершенные заказы, их мы не учитываем
+                    if(!in_array(0, $inactiveStatuses)){
+                        array_push($inactiveStatuses, 0);
+                    }
 
                     // Номери вже існуючих замовлень
                     $existingOrderNumbers = Order::where('store_id', 1)
@@ -56,6 +62,21 @@ class ListOrders extends ListRecords
                         ->success()
                         ->send();
                 }),
+                 Action::make('update_orders_hor')
+                    ->label('Оновити замовлення з Hor')
+                    ->color('info')
+                    ->requiresConfirmation()
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->action(function () {
+                        // Неактивні статуси
+                        $activeStatuses = OrderStatus::where('store_id', 2) // 2 - Horoshop
+                            ->where('is_active', 1)
+                            ->pluck('identifier')                        
+                            ->toArray();
+
+                        $this->updateOrdersFromHoroshop($activeStatuses);
+
+                    }),
 
             Actions\CreateAction::make(),
         ];
@@ -256,4 +277,31 @@ class ListOrders extends ListRecords
         return [$ordersForInsert, $ordersForUpdate];
     }
 
+    public function updateOrdersFromHoroshop($inactiveStatuses)
+    {
+        // Все OC‑ID активных продуктов
+        $activeOcProductIds = Product::where('is_active', 1)
+            ->pluck('product_id_oc')
+            ->toArray();
+
+        dd($activeOcProductIds);
+
+        $response = app(\App\Services\HoroshopApiService::class)->call('orders/get', [
+            'status' => $inactiveStatuses
+        ]);
+
+        $orders = $response['response']['orders'] ?? [];
+
+        $forSave = [];
+        $forUpdate = [];
+
+        foreach($orders as $order){
+            $data = [
+                'name' => $order->name ?? '',
+                'store_id' => 2, // ocStore
+                'identifier' => $order['order_id'],
+                'is_active' => 1,
+            ];
+        }
+    }
 }

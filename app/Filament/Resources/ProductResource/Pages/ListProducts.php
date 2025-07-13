@@ -31,7 +31,9 @@ class ListProducts extends ListRecords
                 ->color('info')
                 ->requiresConfirmation()
                 ->icon('heroicon-o-arrow-down-tray')
-                ->action(function () {}),
+                ->action(function () {
+                    $this->updateHorProducts();
+                }),
 
             Actions\CreateAction::make(),
         ];
@@ -96,5 +98,34 @@ class ListProducts extends ListRecords
             ->body('Додано: ' . count($productsForSave) . ', оновлено: ' . count($productsForUpdate))
             ->success()
             ->send();
+    }
+
+    public function updateHorProducts()
+    {
+        $existingProductIds = Product::where('is_active', 1)
+            ->pluck('product_id_hor')
+            ->toArray();
+
+        $response = app(\App\Services\HoroshopApiService::class)->call('catalog/export/');
+        dd($response);
+
+        $products = $response['response']['products'] ?? [];
+
+        $productsForSave = [];
+        $productsForUpdate = [];
+
+        foreach($products as $product){
+
+            $image = empty($product['images']) ? ($product['gallery_common'][0] ?? '') : $product['images'][0];
+
+            $data = [
+                'name' => $product['title']['ua'],
+                'sku' => $product['article'],
+                'stock_quantity' => 0,
+                'image' => $image,
+                'product_id_hor' => $product['product_id'],
+                'is_active' => true
+            ];
+        }
     }
 }
