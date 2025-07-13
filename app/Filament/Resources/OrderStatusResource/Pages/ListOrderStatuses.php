@@ -35,7 +35,7 @@ class ListOrderStatuses extends ListRecords
                             'name' => $ocStatus->name ?? '',
                             'store_id' => 1, // ocStore
                             'identifier' => $ocStatus->order_status_id,
-                            'is_active' => 0,
+                            'is_active' => 1,
                         ];
 
                         if (in_array($ocStatus->order_status_id, $existingIdentifiers)) {
@@ -87,7 +87,7 @@ class ListOrderStatuses extends ListRecords
                             'name'=> $status['title']['ua'] ?? '',
                             'store_id' => 2, // horoshop
                             'identifier' => $status['id'],
-                            'is_active' => 0
+                            'is_active' => 1
                         ];
 
                         if (in_array($status['id'], $existingIdentifiers)) {
