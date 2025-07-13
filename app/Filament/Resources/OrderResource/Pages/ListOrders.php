@@ -71,7 +71,14 @@ class ListOrders extends ListRecords
                     ->requiresConfirmation()
                     ->icon('heroicon-o-arrow-down-tray')
                     ->action(function () {
-                        $this->updateOrdersFromHoroshop();
+
+                        $result = $this->updateOrdersFromHoroshop();
+                        
+                        Notification::make()
+                            ->title('Оновлення завершено')
+                            ->body("Додано {$result['created']} замовлень, оновлено {$result['updated']} замовлень.")
+                            ->success()
+                            ->send();
                     }),
 
                 Actions\CreateAction::make(),
@@ -273,34 +280,31 @@ class ListOrders extends ListRecords
         return [$ordersForInsert, $ordersForUpdate];
     }
 
-   public function updateOrdersFromHoroshop(): array
+    public function updateOrdersFromHoroshop(): array
     {
-        DB::transaction(function () {
+        return DB::transaction(function () {
 
-            /** Шаг 0. Справочники ************************************************/
+            $createdCount = 0;
+            $updatedCount = 0;
 
-            // Активные статусы Horoshop‑магазина
+            // 1. Получаем справочники
             $activeStatuses = OrderStatus::where('store_id', 2)
                 ->where('is_active', 1)
                 ->pluck('identifier')
                 ->all();
 
-            // Все активные локальные артикула
             $activeSkus = Product::where('is_active', 1)
                 ->pluck('sku')
                 ->all();
 
-            // Мапа SKU → product_id (пригодится для pivot)
             $productsMap = Product::whereIn('sku', $activeSkus)
                 ->get(['id', 'sku'])
                 ->keyBy('sku');
 
-            // Уже существующие заказы Horoshop‑магазина
             $existingOrders = Order::where('store_id', 2)
-                ->pluck('id', 'order_number');   // ['HS‑123' => 17, …]
+                ->pluck('id', 'order_number'); // ['HS123' => 1]
 
-            /** Шаг 1. Загрузка заказов *******************************************/
-
+            // 2. Получаем заказы
             $response = app(\App\Services\HoroshopApiService::class)->call(
                 'orders/get',
                 ['status' => $activeStatuses]
@@ -308,45 +312,41 @@ class ListOrders extends ListRecords
             $remoteOrders = $response['response']['orders'] ?? [];
 
             if (empty($remoteOrders)) {
-                Notification::make()
-                    ->title('Оновлення завершено')
-                    ->body("Додавати чи оновлювати нічого!")
-                    ->info()
-                    ->send();
-                return []; // нечего делать
+                return ['created' => 0, 'updated' => 0];
             }
 
-            /** Шаг 2. Разбор *****************************************************/
-
-            $ordersToUpsert   = [];   // будущий bulk‑upsert по таблице orders
-            $pivotToUpsert    = [];   // будущий bulk‑upsert по order_products
+            $ordersToUpsert = [];
+            $pivotToUpsert = [];
 
             foreach ($remoteOrders as $order) {
-
-                // 2‑a. Оставляем только «разрешённые» товары
                 $allowedProducts = collect($order['products'] ?? [])
                     ->filter(fn ($p) => in_array($p['article'], $activeSkus))
                     ->all();
 
                 if (empty($allowedProducts)) {
-                    continue; // не интересуемся заказами без нужных товаров
+                    continue;
                 }
 
-                // 2‑b. Данные для самой таблицы orders
+                $isNew = !isset($existingOrders[$order['order_id']]);
+
                 $ordersToUpsert[] = [
                     'order_number'            => $order['order_id'],
                     'store_id'                => 2,
-                    'status'                  => 'відкритий',             // при желании определяйте динамически
+                    'status'                  => 'відкритий',
                     'order_status_identifier' => $order['stat_status'],
                     'order_date'              => $order['stat_created'],
-                    'updated_at'              => now(),                   // upsert требует
+                    'updated_at'              => now(),
                     'created_at'              => now(),
                 ];
 
-                // 2‑c. Pivot‑строки (order_id узнаем позже)
+                if ($isNew) {
+                    $createdCount++;
+                } else {
+                    $updatedCount++;
+                }
+
                 foreach ($allowedProducts as $product) {
                     $pivotToUpsert[] = [
-                        // order_id проставим чуть ниже
                         'order_number' => $order['order_id'],
                         'product_id'   => $productsMap[$product['article']]->id ?? null,
                         'quantity'     => $product['quantity'],
@@ -356,43 +356,34 @@ class ListOrders extends ListRecords
                 }
             }
 
-            if (empty($ordersToUpsert)) {
-                Notification::make()
-                    ->title('Оновлення завершено')
-                    ->body("Додавати чи оновлювати нічого!")
-                    ->info()
-                    ->send();
-                return [];
+            if (!empty($ordersToUpsert)) {
+                Order::upsert(
+                    $ordersToUpsert,
+                    ['order_number'],
+                    ['status', 'order_status_identifier', 'order_date', 'updated_at']
+                );
+
+                $orderIds = Order::where('store_id', 2)
+                    ->whereIn('order_number', Arr::pluck($ordersToUpsert, 'order_number'))
+                    ->pluck('id', 'order_number');
+
+                foreach ($pivotToUpsert as &$row) {
+                    $row['order_id'] = $orderIds[$row['order_number']] ?? null;
+                    unset($row['order_number']);
+                }
+
+                OrderProduct::upsert(
+                    $pivotToUpsert,
+                    ['order_id', 'product_id'],
+                    ['quantity', 'updated_at']
+                );
             }
 
-            /** Шаг 3. upsert по orders *******************************************/
-
-            Order::upsert(
-                $ordersToUpsert,
-                ['order_number'],                               // уникальный ключ
-                ['status', 'order_status_identifier', 'order_date', 'updated_at']
-            );
-
-            // Получаем id только что вставленных / обновлённых заказов
-            $orderIds = Order::where('store_id', 2)
-                ->whereIn('order_number', Arr::pluck($ordersToUpsert, 'order_number'))
-                ->pluck('id', 'order_number');                 // ['HS‑123' => 42, …]
-
-            /** Шаг 4. upsert по pivot *******************************************/
-
-            // Проставляем реальные order_id
-            foreach ($pivotToUpsert as &$row) {
-                $row['order_id'] = $orderIds[$row['order_number']];
-                unset($row['order_number']); // лишнее
-            }
-
-            OrderProduct::upsert(
-                $pivotToUpsert,
-                ['order_id', 'product_id'],                    // составной уник. ключ
-                ['quantity', 'updated_at']
-            );
+            return [
+                'created' => $createdCount,
+                'updated' => $updatedCount,
+            ];
         });
-
-        return [];
     }
+
 }
