@@ -14,13 +14,13 @@ use App\Models\OrderProduct;
 use App\Models\OrderStatus;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Arr;
+
 
 class ListOrders extends ListRecords
 {
     protected static string $resource = OrderResource::class;
 
-    protected function getHeaderActions(): void
+    protected function getHeaderActions(): array
     {
         return [
             Action::make('update_orders_oc')
@@ -64,7 +64,7 @@ class ListOrders extends ListRecords
                         ->success()
                         ->send();
                 }),
-                 Action::make('update_orders_hor')
+                Action::make('update_orders_hor')
                     ->label('Оновити замовлення з Hor')
                     ->color('info')
                     ->requiresConfirmation()
@@ -73,7 +73,7 @@ class ListOrders extends ListRecords
                         $this->updateOrdersFromHoroshop();
                     }),
 
-            Actions\CreateAction::make(),
+                Actions\CreateAction::make(),
         ];
     }
 
@@ -309,10 +309,10 @@ class ListOrders extends ListRecords
             if (empty($remoteOrders)) {
                 Notification::make()
                     ->title('Оновлення завершено')
-                    ->body("Незнайдено жодного замовлення!")
+                    ->body("Додавати чи оновлювати нічого!")
                     ->info()
                     ->send();
-                return; // нечего делать
+                return []; // нечего делать
             }
 
             /** Шаг 2. Разбор *****************************************************/
@@ -361,7 +361,7 @@ class ListOrders extends ListRecords
                     ->body("Додавати чи оновлювати нічого!")
                     ->info()
                     ->send();
-                return;
+                return [];
             }
 
             /** Шаг 3. upsert по orders *******************************************/
@@ -392,5 +392,6 @@ class ListOrders extends ListRecords
             );
         });
 
+        return [];
     }
 }
