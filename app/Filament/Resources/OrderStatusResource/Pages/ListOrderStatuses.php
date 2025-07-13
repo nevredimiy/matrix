@@ -86,7 +86,7 @@ class ListOrderStatuses extends ListRecords
                         $data = [
                             'name'=> $status['title']['ua'] ?? '',
                             'store_id' => 2, // horoshop
-                            'identifier' => $status['id'],
+                            'identifier' => 200 + $status['id'],
                             'is_active' => 0
                         ];
 
