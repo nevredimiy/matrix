@@ -64,10 +64,11 @@ class ListOrderStatuses extends ListRecords
                     Notification::make()
                         ->title('Оновлення завершено')
                         ->body("Додано: " . count($forSave) . ", оновлено: " . count($forUpdate))
-                        ->success();
+                        ->success()
+                        ->sent();
                 }), 
 
-              Action::make('update_order_statuses_oc')
+              Action::make('update_order_statuses_hor')
                 ->label('Оновити Статуси замовлень Horoshop')
                 ->color('info')
                 ->icon('heroicon-o-arrow-down-tray')
@@ -86,7 +87,7 @@ class ListOrderStatuses extends ListRecords
                         $data = [
                             'name'=> $status['title']['ua'] ?? '',
                             'store_id' => 2, // horoshop
-                            'identifier' => 200 + $status['id'],
+                            'identifier' => $status['id'],
                             'is_active' => 0
                         ];
 
@@ -116,7 +117,8 @@ class ListOrderStatuses extends ListRecords
                     Notification::make()
                         ->title('Оновлення завершено')
                         ->body("Додано: " . count($forSave) . ", оновлено: " . count($forUpdate))
-                        ->success();
+                        ->success()
+                        ->sent();
                 }),
 
                  
