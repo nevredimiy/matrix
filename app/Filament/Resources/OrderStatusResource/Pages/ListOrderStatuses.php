@@ -65,7 +65,7 @@ class ListOrderStatuses extends ListRecords
                         ->title('Оновлення завершено')
                         ->body("Додано: " . count($forSave) . ", оновлено: " . count($forUpdate))
                         ->success()
-                        ->sent();
+                        ->send();
                 }), 
 
               Action::make('update_order_statuses_hor')
@@ -118,7 +118,7 @@ class ListOrderStatuses extends ListRecords
                         ->title('Оновлення завершено')
                         ->body("Додано: " . count($forSave) . ", оновлено: " . count($forUpdate))
                         ->success()
-                        ->sent();
+                        ->send();
                 }),
 
                  
