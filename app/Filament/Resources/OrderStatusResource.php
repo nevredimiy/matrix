@@ -54,6 +54,7 @@ class OrderStatusResource extends Resource
                     ->label('Назва'),
                 Tables\Columns\TextColumn::make('store.name')
                     ->sortable()
+                    ->searchable()
                     ->label('Магазин'),
                 Tables\Columns\TextColumn::make('identifier')
                     ->numeric()
