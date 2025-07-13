@@ -55,7 +55,6 @@ class ListOrderStatuses extends ListRecords
                                 ['identifier' => $dataUpdate['identifier']],
                                 [
                                     'name' => $dataUpdate['name'],
-                                    'identifier' => $dataUpdate['identifier'],
                                 ]
                             );
                         }
@@ -108,7 +107,6 @@ class ListOrderStatuses extends ListRecords
                                 ['identifier' => $dataUpdate['identifier']],
                                 [
                                     'name' => $dataUpdate['name'],
-                                    'identifier' => $dataUpdate['id'],
                                 ]
                             );
                         }
