@@ -51,15 +51,12 @@ class ListOrders extends ListRecords
                     $archivedRows = $this->updateOrderStatuses($inactiveStatuses, $existingOrderNumbers);
 
                     // Синхронізація замовлень
-                    ['new_numbers' => $newNumbers, 'all_numbers' => $allNumbers] =
-                        $this->updateOrders($inactiveStatuses, $existingOrderNumbers);
-
-                    $insertedCount = count($newNumbers);
-                    $updatedCount = count($allNumbers) - $insertedCount;
+                    [$ordersForInsert, $ordersForUpdate] = $this->updateOrders($inactiveStatuses, $existingOrderNumbers);
 
                     // Підрахунок
                     $archivedCount      = is_countable($archivedRows)      ? count($archivedRows)      : 0;
-                   
+                    $insertedCount      = is_countable($ordersForInsert)   ? count($ordersForInsert)   : 0;
+                    $updatedCount       = is_countable($ordersForUpdate)   ? count($ordersForUpdate)   : 0;
 
                     // Повідомлення
                     Notification::make()
@@ -74,6 +71,7 @@ class ListOrders extends ListRecords
                     ->requiresConfirmation()
                     ->icon('heroicon-o-arrow-down-tray')
                     ->action(function () {
+
                         $result = $this->updateOrdersFromHoroshop();
                         
                         Notification::make()
@@ -142,10 +140,6 @@ class ListOrders extends ListRecords
 
     public function updateOrders(array $inactiveStatuses, array $existingOrderNumbers): array
     {
-
-        $existingSet = collect($existingOrderNumbers)->flip(); // ['29101' => 0, …]
-        $newNumbers = [];  // список order_number, которых не было ранее
-
         // Все OC‑ID активных продуктов
         $activeOcProductIds = Product::where('is_active', 1)
             ->pluck('product_id_oc')
@@ -163,9 +157,6 @@ class ListOrders extends ListRecords
         $rawOrderItems    = []; // временно храним товары по order_number
 
         foreach ($ocOrders as $ocOrder) {
-
-            $orderNumber = $ocOrder->order_id;
-            $isExisting = $existingSet->has($orderNumber);
 
             $orderPayload = [
                 'order_number'            => $ocOrder->order_id,
@@ -290,10 +281,7 @@ class ListOrders extends ListRecords
         });
 
 
-        return [
-            'new_numbers'  => $newNumbers,
-            'all_numbers'  => collect($ocOrders)->pluck('order_id')->all()
-        ];
+        return [$ordersForInsert, $ordersForUpdate];
     }
 
     public function updateOrdersFromHoroshop(): array
