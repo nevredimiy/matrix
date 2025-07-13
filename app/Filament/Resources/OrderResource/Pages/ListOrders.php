@@ -14,12 +14,13 @@ use App\Models\OrderProduct;
 use App\Models\OrderStatus;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Arr;
 
 class ListOrders extends ListRecords
 {
     protected static string $resource = OrderResource::class;
 
-    protected function getHeaderActions(): array
+    protected function getHeaderActions(): void
     {
         return [
             Action::make('update_orders_oc')
@@ -271,7 +272,7 @@ class ListOrders extends ListRecords
         return [$ordersForInsert, $ordersForUpdate];
     }
 
-   public function updateOrdersFromHoroshop(): void
+   public function updateOrdersFromHoroshop(): array
     {
         DB::transaction(function () {
 
@@ -306,6 +307,11 @@ class ListOrders extends ListRecords
             $remoteOrders = $response['response']['orders'] ?? [];
 
             if (empty($remoteOrders)) {
+                Notification::make()
+                    ->title('Оновлення завершено')
+                    ->body("Незнайдено жодного замовлення!")
+                    ->info()
+                    ->send();
                 return; // нечего делать
             }
 
@@ -350,6 +356,11 @@ class ListOrders extends ListRecords
             }
 
             if (empty($ordersToUpsert)) {
+                Notification::make()
+                    ->title('Оновлення завершено')
+                    ->body("Додавати чи оновлювати нічого!")
+                    ->info()
+                    ->send();
                 return;
             }
 
@@ -380,5 +391,6 @@ class ListOrders extends ListRecords
                 ['quantity', 'updated_at']
             );
         });
+
     }
 }
