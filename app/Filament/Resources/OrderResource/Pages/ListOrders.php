@@ -51,17 +51,16 @@ class ListOrders extends ListRecords
                     $archivedRows = $this->updateOrderStatuses($inactiveStatuses, $existingOrderNumbers);
 
                     // Синхронізація замовлень
-                    [$ordersForInsert, $ordersForUpdate] = $this->updateOrders($inactiveStatuses, $existingOrderNumbers);
+                    $ordersForInsert = $this->updateOrders($inactiveStatuses, $existingOrderNumbers);
 
                     // Підрахунок
                     $archivedCount      = is_countable($archivedRows)      ? count($archivedRows)      : 0;
                     $insertedCount      = is_countable($ordersForInsert)   ? count($ordersForInsert)   : 0;
-                    $updatedCount       = is_countable($ordersForUpdate)   ? count($ordersForUpdate)   : 0;
 
                     // Повідомлення
                     Notification::make()
                         ->title('Оновлення завершено')
-                        ->body("Додано: {$insertedCount},\nоновлено: {$updatedCount},\nвидалено: {$archivedCount}")
+                        ->body("Оброблено замовлень: {$insertedCount},\nвидалено: {$archivedCount}")
                         ->success()
                         ->send();
                 }),
@@ -72,11 +71,21 @@ class ListOrders extends ListRecords
                     ->icon('heroicon-o-arrow-down-tray')
                     ->action(function () {
 
+                        // Неактивні статуси з Horoshop
+                        $inactiveStatuses = OrderStatus::where('store_id', 2)
+                            ->where('is_active', 0)
+                            ->pluck('identifier')
+                            ->toArray();
+
+                        // Архівування
+                        $archivedRows = $this->updateOrderStatusesFromHoroshop($inactiveStatuses);
+                        $archivedRowsCount = count($archivedRows);
+
                         $result = $this->updateOrdersFromHoroshop();
                         
                         Notification::make()
                             ->title('Оновлення завершено')
-                            ->body("Додано {$result['created']} замовлень, оновлено {$result['updated']} замовлень.")
+                            ->body("Додано {$result['created']} замовлень, оновлено {$result['updated']} замовлень, видалено {$archivedRowsCount}.")
                             ->success()
                             ->send();
                     }),
@@ -281,7 +290,7 @@ class ListOrders extends ListRecords
         });
 
 
-        return [$ordersForInsert, $ordersForUpdate];
+        return $ordersForInsert;
     }
 
     public function updateOrdersFromHoroshop(): array
@@ -389,5 +398,72 @@ class ListOrders extends ListRecords
             ];
         });
     }
+
+    public function updateOrderStatusesFromHoroshop(array $inactiveStatuses): array
+    {
+        // Получаем все текущие заказы в системе
+        $existingOrders = Order::where('store_id', 2)
+            ->pluck('order_number')
+            ->toArray();
+
+        if (empty($existingOrders)) {
+            return [];
+        }
+
+        // Запрашиваем заказы с нужными статусами по API
+        $response = app(\App\Services\HoroshopApiService::class)->call('orders/get', [
+            'status' => $inactiveStatuses,
+            'ids' => $existingOrders
+        ]);
+
+        $remoteOrders = $response['response']['orders'] ?? [];
+
+        if (empty($remoteOrders)) {
+            return [];
+        }
+
+        // Из API берем только те, которые уже есть у нас
+        $orderIdsToArchive = collect($remoteOrders)->pluck('order_id')->values();
+
+
+        if ($orderIdsToArchive->isEmpty()) {
+            return [];
+        }
+
+        // Загружаем заказы с товарами и статусами
+        $orders = Order::with(['orderProducts.product', 'orderStatus'])
+            ->where('store_id', 2)
+            ->whereIn('order_number', $orderIdsToArchive)
+            ->get();
+
+        // Готовим данные для arhived_orders
+        $archiveRows = $orders->map(function (Order $order) {
+            $skues = $order->orderProducts
+                ->map(fn($op) => $op->product->sku)
+                ->filter()
+                ->implode(',');
+
+            return [
+                'order_number'    => $order->order_number,
+                'store_id'        => $order->store_id,
+                'status_order'    => $order->orderStatus?->name ?? 'архів',
+                'product_skues'   => $skues,
+                'created_at'      => now(),
+                'updated_at'      => now(),
+            ];
+        })->all();
+
+        // Сохраняем и удаляем
+        DB::transaction(function () use ($archiveRows, $orderIdsToArchive) {
+            DB::table('arhived_orders')->insertOrIgnore($archiveRows);
+
+            Order::where('store_id', 2)
+                ->whereIn('order_number', $orderIdsToArchive)
+                ->delete();
+        });
+
+        return $archiveRows;
+    }
+
 
 }
