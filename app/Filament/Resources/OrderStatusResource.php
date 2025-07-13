@@ -49,6 +49,10 @@ class OrderStatusResource extends Resource
         return $table
             ->description('ВИКЛЮЧЕННЯ СТАТУСУ означає, що замовлення з таким статусом НЕ РОЗГЛЯДАЄТЬСЯ')
             ->columns([
+                 Tables\Columns\TextColumn::make('identifier')
+                    ->numeric()
+                    ->sortable()
+                    ->label('ID статусу'),
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->label('Назва'),
@@ -56,10 +60,7 @@ class OrderStatusResource extends Resource
                     ->sortable()
                     ->searchable()
                     ->label('Магазин'),
-                Tables\Columns\TextColumn::make('identifier')
-                    ->numeric()
-                    ->sortable()
-                    ->label('ID статусу'),
+               
                 ToggleColumn::make('is_active')
                     ->label('Вкл/Викл'),
                 Tables\Columns\TextColumn::make('created_at')
