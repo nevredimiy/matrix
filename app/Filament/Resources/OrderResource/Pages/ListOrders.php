@@ -204,8 +204,13 @@ class ListOrders extends ListRecords
 
             // Вставка / обновление заказов
             if ($ordersForInsert) {
-                DB::table('orders')->insert($ordersForInsert);
+                DB::table('orders')->upsert(
+                    $ordersForInsert,
+                    ['order_number', 'store_id'],
+                    ['order_status_identifier', 'order_date', 'updated_at']
+                );
             }
+
 
             if ($ordersForUpdate) {
                 DB::table('orders')->upsert(
