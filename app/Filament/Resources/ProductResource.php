@@ -109,7 +109,7 @@ class ProductResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
 
-                    Tables\Actions\BulkAction::make('disable')
+                Tables\Actions\BulkAction::make('disable')
                         ->label('Вимкнути обрані')
                         ->icon('heroicon-o-eye-slash')
                         ->color('warning')
@@ -121,19 +121,19 @@ class ProductResource extends Resource
                         ->requiresConfirmation()
                         ->deselectRecordsAfterCompletion(),
 
-                    Tables\Actions\BulkAction::make('enable')
-                        ->label('Увімкнути обрані')
-                        ->icon('heroicon-o-eye')
-                        ->color('success')
-                        ->action(function (Collection $records) {
-                            $records->each(function ($record) {
-                                $record->update(['is_active' => true]);
-                            });
-                        })
-                        ->requiresConfirmation()
-                        ->deselectRecordsAfterCompletion(),
+                Tables\Actions\BulkAction::make('enable')
+                    ->label('Увімкнути обрані')
+                    ->icon('heroicon-o-eye')
+                    ->color('success')
+                    ->action(function (Collection $records) {
+                        $records->each(function ($record) {
+                            $record->update(['is_active' => true]);
+                        });
+                    })
+                    ->requiresConfirmation()
+                    ->deselectRecordsAfterCompletion(),
                         
-                            ]),
+                ]),
             ]);
     }
 

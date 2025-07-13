@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Forms\Components\Toggle;
+use Illuminate\Database\Eloquent\Collection;
 
 class OrderStatusResource extends Resource
 {
@@ -79,6 +80,30 @@ class OrderStatusResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
+
+                 Tables\Actions\BulkAction::make('disable')
+                        ->label('Вимкнути обрані')
+                        ->icon('heroicon-o-eye-slash')
+                        ->color('warning')
+                        ->action(function (Collection $records) {
+                            $records->each(function ($record) {
+                                $record->update(['is_active' => false]);
+                            });
+                        })
+                        ->requiresConfirmation()
+                        ->deselectRecordsAfterCompletion(),
+
+                Tables\Actions\BulkAction::make('enable')
+                    ->label('Увімкнути обрані')
+                    ->icon('heroicon-o-eye')
+                    ->color('success')
+                    ->action(function (Collection $records) {
+                        $records->each(function ($record) {
+                            $record->update(['is_active' => true]);
+                        });
+                    })
+                    ->requiresConfirmation()
+                    ->deselectRecordsAfterCompletion(),
             ]);
     }
 
