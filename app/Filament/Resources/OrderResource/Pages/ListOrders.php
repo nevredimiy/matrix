@@ -117,13 +117,12 @@ class ListOrders extends ListRecords
     public function updateOrders(array $inactiveStatuses, array $existingOrderNumbers): array
     {
 
-
-        // 1. Все OC‑ID активных продуктов
+        // Все OC‑ID активных продуктов
         $activeOcProductIds = Product::where('is_active', 1)
             ->pluck('product_id_oc')
             ->toArray();
 
-        // 2. Заказы OpenCart, где есть активные товары и статус ≠ архив
+        // Заказы OpenCart, где есть активные товары и статус ≠ архив
         $ocOrders = OcOrder::with('products')
             ->whereHas('products', fn($q) => $q->whereIn('product_id', $activeOcProductIds))
             ->whereNotIn('order_status_id', $inactiveStatuses)
@@ -133,7 +132,6 @@ class ListOrders extends ListRecords
         $ordersForInsert  = [];
         $ordersForUpdate  = [];
         $rawOrderItems    = []; // временно храним товары по order_number
-
 
         foreach ($ocOrders as $ocOrder) {
 
@@ -172,7 +170,7 @@ class ListOrders extends ListRecords
         // --- Транзакция ---
         DB::transaction(function () use (&$ordersForInsert, &$ordersForUpdate, &$rawOrderItems) {
 
-            // 1. Валидация статусов
+            // Валидация статусов
             $validStatusIds = OrderStatus::pluck('identifier')->toArray();
 
             $ordersForInsert = collect($ordersForInsert)
@@ -180,7 +178,7 @@ class ListOrders extends ListRecords
                 ->values()
                 ->all();
 
-            // 2. Вставка / обновление заказов
+            // Вставка / обновление заказов
             if ($ordersForInsert) {
                 DB::table('orders')->insert($ordersForInsert);
             }
@@ -189,17 +187,17 @@ class ListOrders extends ListRecords
                 DB::table('orders')->upsert(
                     $ordersForUpdate,
                     ['order_number', 'store_id'],
-                    ['status', 'order_status_identifier', 'order_date', 'updated_at']
+                    ['order_status_identifier', 'order_date', 'updated_at']
                 );
             }
 
-            // 3. Получаем map order_number → id (уже после вставки!)
+            // Получаем map order_number → id (уже после вставки!)
             $orderIdMap = Order::where('store_id', 1)
                 ->whereIn('order_number', array_keys($rawOrderItems))
                 ->pluck('id', 'order_number')
                 ->toArray();
 
-            // 4. Готовим массивы insert/upsert для товаров
+            // Готовим массивы insert/upsert для товаров
             $orderProductsInsert = [];
             $orderProductsUpsert = [];
 
@@ -231,7 +229,7 @@ class ListOrders extends ListRecords
                     }
                 }
 
-                // 5. Удаляем «лишние» товары у существующих заказов
+                // Удаляем «лишние» товары у существующих заказов
                 if (in_array($orderNumber, $ordersForUpdate ? collect($ordersForUpdate)->pluck('order_number')->all() : [], true)) {
                     DB::table('order_products')
                         ->where('order_id', $orderId)
@@ -240,7 +238,7 @@ class ListOrders extends ListRecords
                 }
             }
 
-            // 6. Сохраняем товары
+            // Сохраняем товары
             if ($orderProductsInsert) {
                 DB::table('order_products')->insert($orderProductsInsert);
             }
@@ -257,4 +255,5 @@ class ListOrders extends ListRecords
 
         return [$ordersForInsert, $ordersForUpdate];
     }
+
 }

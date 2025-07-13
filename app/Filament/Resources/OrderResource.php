@@ -59,15 +59,20 @@ class OrderResource extends Resource
                             ->options(Product::query()->pluck('name', 'id'))
                             ->searchable()
                             ->required(),
+                        Select::make('product_id')
+                            ->label('SKU')
+                            ->options(Product::query()->pluck('sku', 'id'))
+                            ->searchable()
+                            ->required(),
                         TextInput::make('quantity')
                             ->label('Количество')
                             ->numeric()
                             ->minValue(1)
                             ->required(),
-                    ])
+                    ])->columns(3)
                     ->required()
                     ->columnSpanFull()
-                    ->createItemButtonLabel('Додати товар'),
+                    ->addActionLabel('Додати товар'),
             ]);
     }
 
@@ -77,9 +82,19 @@ class OrderResource extends Resource
             ->columns([
                 TextColumn::make('order_number')->label('Номер заказа')->sortable()->searchable(),
                 TextColumn::make('store.name')->label('Магазин')->sortable()->searchable(),
-                TextColumn::make('status')->label('Статус')->sortable()->toggleable(),
+                TextColumn::make('status')->label('Статус')->sortable(),
                 TextColumn::make('order_date')->label('Дата заказа')->date()->sortable(),
                 TextColumn::make('products_count')->counts('products')->label('Количество товаров'),
+                TextColumn::make('products_skus')
+                    ->label('Артикулы')
+                    ->getStateUsing(function ($record) {
+                        return $record->pivotProducts->pluck('sku')->implode(', ');
+                    })
+                    
+                    // ->toggleable()
+                    ->limit(50) // если хочешь ограничить длину вывода
+                    ->tooltip(fn ($record) => $record->pivotProducts->pluck('name')->implode(', ')), // полный список в tooltip
+                    
             ])
             ->defaultSort('order_date', 'desc')
             ->filters([
@@ -107,4 +122,11 @@ class OrderResource extends Resource
             'edit' => Pages\EditOrder::route('/{record}/edit'),
         ];
     }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()
+            ->with('pivotProducts');
+    }
+
 }

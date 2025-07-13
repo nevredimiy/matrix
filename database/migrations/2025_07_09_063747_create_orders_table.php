@@ -31,7 +31,7 @@ return new class extends Migration
             $table->string('product_sku')->index();
             $table->unsignedInteger('quantity');
             $table->foreignId('store_id')->constrained('stores')->onDelete('cascade');
-            $table->string('status')->default('pending');
+            $table->string('status')->default('відкритий');
             $table->timestamps();
         });
 

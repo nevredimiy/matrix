@@ -25,7 +25,7 @@ class ListOrderStatuses extends ListRecords
                 ->icon('heroicon-o-arrow-down-tray')
                 ->action(function () {
                     $ocStatuses = OcOrderStatus::where('language_id', 5)->get(); // 5 - укр. яз.
-                    $existingIdentifiers = OrderStatus::pluck('identifier')->toArray();
+                    $existingIdentifiers = OrderStatus::where('store_id', 1)->pluck('identifier')->toArray();
 
                     $forSave = [];
                     $forUpdate = [];
@@ -55,7 +55,7 @@ class ListOrderStatuses extends ListRecords
                                 ['identifier' => $dataUpdate['identifier']],
                                 [
                                     'name' => $dataUpdate['name'],
-                                    'store_id' => $dataUpdate['store_id'],
+                                    'identifier' => $dataUpdate['identifier'],
                                 ]
                             );
                         }
@@ -66,6 +66,58 @@ class ListOrderStatuses extends ListRecords
                         ->body("Додано: " . count($forSave) . ", оновлено: " . count($forUpdate))
                         ->success();
                 }), 
+
+              Action::make('update_order_statuses_oc')
+                ->label('Оновити Статуси замовлень Horoshop')
+                ->color('info')
+                ->icon('heroicon-o-arrow-down-tray')
+                ->action(function () {
+
+                    $response = app(\App\Services\HoroshopApiService::class)->call('orders/get_available_statuses');
+                    $horStatuses = $response['response']['statuses'] ?? [];
+
+                    $existingIdentifiers = OrderStatus::where('store_id', 2)->pluck('identifier')->toArray();
+
+                    $forSave = [];
+                    $forUpdate = [];
+
+
+                    foreach($horStatuses as $status){
+                        $data = [
+                            'name'=> $status['title']['ua'] ?? '',
+                            'store_id' => 2, // horoshop
+                            'identifier' => $status['id'],
+                            'is_active' => 0
+                        ];
+
+                        if (in_array($status['id'], $existingIdentifiers)) {
+                            $forUpdate[] = $data;
+                        } else {
+                            $forSave[] = $data;
+                        }
+                    }
+
+                    DB::transaction(function () use ($forSave, $forUpdate) {
+                        foreach ($forSave as $data) {
+                            OrderStatus::create($data);
+                        }
+
+                        foreach ($forUpdate as $dataUpdate) {
+                            OrderStatus::updateOrCreate(
+                                ['identifier' => $dataUpdate['identifier']],
+                                [
+                                    'name' => $dataUpdate['name'],
+                                    'identifier' => $dataUpdate['id'],
+                                ]
+                            );
+                        }
+                    });
+
+                    Notification::make()
+                        ->title('Оновлення завершено')
+                        ->body("Додано: " . count($forSave) . ", оновлено: " . count($forUpdate))
+                        ->success();
+                }),
 
                  
 

@@ -41,6 +41,7 @@ class ProductsRelationManager extends RelationManager
             ->recordTitleAttribute('product_id')
             ->columns([
                 TextColumn::make('product.name')->label('Товар')->searchable(),
+                TextColumn::make('product.sku')->label('SKU')->searchable(),
                 TextColumn::make('quantity')->label('Количество'),
             ])
             ->filters([
