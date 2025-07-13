@@ -106,7 +106,7 @@ class ListProducts extends ListRecords
             ->pluck('product_id_hor')
             ->toArray();
 
-        $response = app(\App\Services\HoroshopApiService::class)->call('catalog/export/');
+        $response = app(\App\Services\HoroshopApiService::class)->call('catalog/export');
         dd($response);
 
         $products = $response['response']['products'] ?? [];
