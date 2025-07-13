@@ -26,14 +26,14 @@ class ListProducts extends ListRecords
                 ->action(function () {
                     $this->updateOcProducts();
                 }),
-            Action::make('update_products')
-                ->label('Оновити товари Horoshop')
-                ->color('info')
-                ->requiresConfirmation()
-                ->icon('heroicon-o-arrow-down-tray')
-                ->action(function () {
-                    $this->updateHorProducts();
-                }),
+            // Action::make('update_products')
+            //     ->label('Оновити товари Horoshop')
+            //     ->color('info')
+            //     ->requiresConfirmation()
+            //     ->icon('heroicon-o-arrow-down-tray')
+            //     ->action(function () {
+            //         $this->updateHorProducts();
+            //     }),
 
             Actions\CreateAction::make(),
         ];
@@ -100,8 +100,10 @@ class ListProducts extends ListRecords
             ->send();
     }
 
+    // пока не берем. Неясно по какому критерию
     public function updateHorProducts()
     {
+
         $existingProductIds = Product::where('is_active', 1)
             ->pluck('sku')
             ->toArray();
