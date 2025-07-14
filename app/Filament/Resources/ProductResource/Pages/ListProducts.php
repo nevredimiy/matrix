@@ -105,7 +105,7 @@ class ListProducts extends ListRecords
     public function updateHorProducts()
     {
 
-        $existingProductIds = Product::where('is_active', 1)
+        $existingProductIds = Product::where('is_active', 0)
             ->pluck('sku')
             ->toArray();
 

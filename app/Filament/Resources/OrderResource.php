@@ -27,9 +27,7 @@ class OrderResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $navigationLabel = 'Замовлення';
-
-    protected static ?string $navigationGroup = 'Головна';
+    protected static ?string $navigationLabel = 'Замовлення з магазинів';
 
     public static function form(Form $form): Form
     {

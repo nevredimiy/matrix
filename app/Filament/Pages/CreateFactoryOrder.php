@@ -6,6 +6,8 @@ use Filament\Pages\Page;
 use App\Models\Order;
 use App\Models\Product;
 use Filament\Notifications\Notification;
+use Illuminate\Support\Facades\DB;
+use App\Models\FactoryOrder;
 
 class CreateFactoryOrder extends Page
 {
@@ -13,9 +15,12 @@ class CreateFactoryOrder extends Page
 
     protected static string $view = 'filament.pages.create-factory-order';
 
+    protected static ?string $navigationLabel = 'Створити замовлення на виробницство';
+
     public $items = [];
     public $factoryId = null;
     public $factories = [];
+    public $products = [];
 
 
     public function mount()
@@ -44,6 +49,7 @@ class CreateFactoryOrder extends Page
                         'stock_quantity' => $product->stock_quantity ?? 0,
                         'quantity'       => 0,
                         'order_ids'      => [],
+                        'factory_id'       => 1
                     ];
                 }
 
@@ -53,19 +59,21 @@ class CreateFactoryOrder extends Page
             }
         }
 
-        
-
         $this->items = collect($itemsGrouped)
             ->map(function ($row) {
                 $row['order_id'] = implode(',', $row['order_ids']);
                 unset($row['order_ids']);
+
+                $requiredQuantity = $row['quantity'] - $row['stock_quantity'] > 0 ? $row['quantity'] - $row['stock_quantity'] : 0;
+                $row['required_quantity'] = $requiredQuantity;
+
                 return $row;
             })
             ->values()
             ->toArray();
 
-               // Список производств
         $this->factories = \App\Models\Factory::pluck('name', 'id')->toArray();
+        $this->products = \App\Models\Product::pluck('sku')->toArray();
     }
     
 
@@ -97,46 +105,55 @@ class CreateFactoryOrder extends Page
 
     public function save()
     {
-        if (!$this->factoryId) {
-            $this->addError('factoryId', 'Выберите производство.');
-            Notification::make()
-                ->title('Ошибка')
-                ->body('Не удалось создать заказ: Виберіть виробництво' )
-                ->danger()
-                ->send();
-            return;
-        }
+
+        // 1. Группируем товары по фабрикам
+        $groups = collect($this->items)->groupBy('factory_id');
 
         try {
-            $factoryOrder = \App\Models\FactoryOrder::create([
-                'factory_id' => $this->factoryId,
-                'status' => 'в процессе',
-            ]);
+            // 2. Гарантируем целостность данных
+            DB::transaction(function () use ($groups) {
 
-            foreach ($this->items as $item) {
-                $product = Product::where('sku', $item['product_sku'])->first();
-                
+                foreach ($groups as $factoryId => $items) {
 
-                if ($product) {
-                    $factoryOrder->items()->create([
-                        'product_id' => $product->id,
-                        'quantity_ordered' => $item['quantity'],
+                    /** @var FactoryOrder $factoryOrder */
+                    $factoryOrder = FactoryOrder::create([
+                        'factory_id' => $factoryId,
+                        'status'     => 'в процессе',
                     ]);
-                }
-            }    
-        } catch (\Throwable $th) {
-            // Показываем ошибку во flash-сообщении
-            session()->flash('error', 'Ошибка при создании заказа: ' . $th->getMessage());
 
-            // Или через Filament Notification (если подключено):
+                    // 3. Заполняем строки заказа
+                    foreach ($items as $item) {
+                        // вытаскиваем id товара по SKU (value() быстрее first()->id)
+                        $productId = Product::where('sku', $item['product_sku'])->value('id');
+
+                        if ($productId) {
+                            $factoryOrder->items()->create([
+                                'product_id'        => $productId,
+                                'quantity_ordered'  => $item['quantity'],
+                                // если есть, можете сразу добавить required_quantity, quantity_delivered и т.д.
+                            ]);
+                        }
+                    }
+                }
+            });
+
+            Notification::make()
+                ->title('Успех')
+                ->body('Заказы на производство созданы.')
+                ->success()
+                ->send();
+
+        } catch (\Throwable $e) {
+
             Notification::make()
                 ->title('Ошибка')
-                ->body('Не удалось создать заказ: ' . $th->getMessage())
+                ->body('Не удалось создать заказы: '.$e->getMessage())
                 ->danger()
                 ->send();
-        }       
 
-        session()->flash('success', 'Заказ на производство создан!');
+                return back();   // оставляем пользователя на форме
+        }
+
         return redirect()->route('filament.admin.resources.factory-order-items.index');
     }
 
@@ -149,6 +166,7 @@ class CreateFactoryOrder extends Page
             'image' => null,
             'stock_quantity' => 0,
             'quantity' => 1,
+            'factory_id' => 1
         ];
     }
 

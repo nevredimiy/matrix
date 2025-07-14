@@ -21,7 +21,6 @@ class FactoryOrderResource extends Resource
 
     protected static ?string $navigationLabel = 'Замовлення на виробництво';
 
-    protected static ?string $navigationGroup = 'Общие настройки';
 
     public static function form(Form $form): Form
     {
