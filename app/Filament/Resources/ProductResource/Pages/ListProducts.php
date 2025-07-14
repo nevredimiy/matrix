@@ -51,6 +51,7 @@ class ListProducts extends ListRecords
             ->toArray();
 
         $ocProducts = OcProduct::with(['description' => fn($q) => $q->where('language_id', 5)])
+            ->where('status', 1)
             ->get()
             ->toArray();
 

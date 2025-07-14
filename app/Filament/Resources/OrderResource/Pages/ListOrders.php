@@ -277,7 +277,11 @@ class ListOrders extends ListRecords
 
             // Сохраняем товары
             if ($orderProductsInsert) {
-                DB::table('order_products')->insert($orderProductsInsert);
+                DB::table('order_products')->upsert(
+                    $orderProductsInsert,
+                    ['order_id', 'product_id'],
+                    ['quantity', 'updated_at']
+                );
             }
 
             if ($orderProductsUpsert) {
