@@ -84,9 +84,10 @@ class OrderResource extends Resource
                 TextColumn::make('order_number')
                     ->label('Номер заказа')
                     ->sortable()
-                    ->description(function ($record) {
-                        return $record->pivotProducts->pluck('sku')->implode(', ');
-                    })
+                    // ->description(function ($record) {
+                    //     return $record->pivotProducts->pluck('sku')->implode(', ');
+                    // })
+                    ->tooltip(fn ($record) => $record->pivotProducts->pluck('sku')->implode(', '))
                     ->searchable(),
                 TextColumn::make('store.name')->label('Магазин')->sortable()->searchable(),
                 TextColumn::make('status')->label('Статус')->sortable(),
