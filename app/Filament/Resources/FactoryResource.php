@@ -21,7 +21,7 @@ class FactoryResource extends Resource
 
     protected static ?string $navigationLabel = 'Производства';
 
-    protected static ?string $navigationGroup = 'Головна';
+    protected static ?string $navigationGroup = 'Налаштування';
 
     public static function form(Form $form): Form
     {

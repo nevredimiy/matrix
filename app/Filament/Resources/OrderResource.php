@@ -92,9 +92,9 @@ class OrderResource extends Resource
                 TextColumn::make('status')->label('Статус')->sortable(),
                 TextColumn::make('order_date')->label('Дата заказа')->date()->sortable(),
                 TextColumn::make('products_count')->counts('products')->label('Кол-во тов.'),
-                TextColumn::make('products.product.sku')
-                    ->badge()
-                    ->separator(',')
+                // TextColumn::make('products.product.sku')
+                //     ->badge()
+                //     ->separator(',')
                 // TextColumn::make('products_skus')
                 //     ->label('Артикулы')
                 //     ->getStateUsing(function ($record) {
