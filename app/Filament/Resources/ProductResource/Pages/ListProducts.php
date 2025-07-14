@@ -50,7 +50,7 @@ class ListProducts extends ListRecords
             ->pluck('product_id_oc')
             ->toArray();
 
-        $ocProducts = OcProduct::with(['description' => fn($q) => $q->where('language_id', 5)])
+        $ocProducts = OcProduct::with(['description' => fn($q) => $q->where('language_id', 1)])
             ->where('status', 1)
             ->get()
             ->toArray();
