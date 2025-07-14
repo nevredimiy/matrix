@@ -30,7 +30,9 @@
                         <th class="px-4 py-3 text-left text-gray-600 dark:text-gray-300">Название</th>
                         <th class="px-4 py-3 text-left text-gray-600 dark:text-gray-300">Артикул</th>
                         <th class="px-4 py-3 text-left text-gray-600 dark:text-gray-300">На складе</th>
+                        <th class="px-4 py-3 text-left text-gray-600 dark:text-gray-300">В заказах</th>
                         <th class="px-4 py-3 text-left text-gray-600 dark:text-gray-300">К производству</th>
+                        <th class="px-4 py-3 text-left text-gray-600 dark:text-gray-300">Заказы</th>
                         <th class="px-4 py-3 text-left text-gray-600 dark:text-gray-300">Действие</th>
 
                     </tr>
@@ -62,6 +64,9 @@
                             <td class="px-4 py-2 text-gray-900 dark:text-gray-100">
                                 {{ $item['stock_quantity'] }}
                             </td>
+                            <td class="px-4 py-2 text-gray-900 dark:text-gray-100">
+                                {{ $item['quantity'] }}
+                            </td>
                             <td class="px-4 py-2">
                                 <input
                                     type="number"
@@ -69,6 +74,9 @@
                                     min="1"
                                     class="w-24 border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
                                 />
+                            </td>
+                            <td class="px-4 py-2 text-gray-900 dark:text-gray-100">
+                                {{ $item['order_id'] }}
                             </td>
                             <td class="px-4 py-2">
                                 <button

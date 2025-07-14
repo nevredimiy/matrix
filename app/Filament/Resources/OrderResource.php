@@ -19,6 +19,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Actions\BulkAction;
 
 class OrderResource extends Resource
 {
@@ -80,20 +81,29 @@ class OrderResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('order_number')->label('Номер заказа')->sortable()->searchable(),
+                TextColumn::make('order_number')
+                    ->label('Номер заказа')
+                    ->sortable()
+                    ->description(function ($record) {
+                        return $record->pivotProducts->pluck('sku')->implode(', ');
+                    })
+                    ->searchable(),
                 TextColumn::make('store.name')->label('Магазин')->sortable()->searchable(),
                 TextColumn::make('status')->label('Статус')->sortable(),
                 TextColumn::make('order_date')->label('Дата заказа')->date()->sortable(),
                 TextColumn::make('products_count')->counts('products')->label('Кол-во тов.'),
-                TextColumn::make('products_skus')
-                    ->label('Артикулы')
-                    ->getStateUsing(function ($record) {
-                        return $record->pivotProducts->pluck('sku')->implode(', ');
-                    })
+                TextColumn::make('products.product.sku')
+                    ->badge()
+                    ->separator(',')
+                // TextColumn::make('products_skus')
+                //     ->label('Артикулы')
+                //     ->getStateUsing(function ($record) {
+                //         return $record->pivotProducts->pluck('sku')->implode(', ');
+                //     })
                     
-                    // ->toggleable()
-                    ->limit(50) // если хочешь ограничить длину вывода
-                    ->tooltip(fn ($record) => $record->pivotProducts->pluck('name')->implode(', ')), // полный список в tooltip
+                //     // ->toggleable()
+                //     ->limit(50) // если хочешь ограничить длину вывода
+                //     ->tooltip(fn ($record) => $record->pivotProducts->pluck('name')->implode(', ')), // полный список в tooltip
                     
             ])
             ->defaultSort('order_date', 'desc')
@@ -104,6 +114,16 @@ class OrderResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
+                BulkAction::make('createFactoryOrder')
+                    ->label('Сформувати замовлення на виробництво')
+                    ->icon('heroicon-o-truck')
+                    ->requiresConfirmation()
+                    ->action(function ($records) {
+                        $ids = $records->pluck('id')->toArray();
+                        session(['selected_order_ids' => $ids]);
+
+                        return redirect()->route('filament.admin.pages.create-factory-order');
+                    }),
             ]);
     }
 

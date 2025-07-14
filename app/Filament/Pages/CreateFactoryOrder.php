@@ -21,19 +21,50 @@ class CreateFactoryOrder extends Page
     public function mount()
     {
         $orderIds = session('selected_order_ids', []);
+
         $orders = Order::whereIn('id', $orderIds)->get();
 
-        // Предзаполняем список товаров на производство
-        $this->items = $orders->map(fn ($order) => [
-            'order_id' => $order->order_number,
-            'product_sku' => $order->product_sku,
-            'product_name' => $order?->name ?? 'Неизвестный товар',
-            'image' => $order?->image ?? null,
-            'stock_quantity' => $order?->stock_quantity ?? 0,
-            'quantity' => $order->quantity,
-        ])->toArray();
+        $itemsGrouped = [];   // ← массив вместо collect()
+
+        foreach ($orders as $order) {
+            foreach ($order->orderProducts as $op) {
+                $product = $op->product;
+                $sku     = $product->sku ?? null;
+
+                if (!$sku) {
+                    continue;
+                }
+
+                // инициализируем строку, если её ещё нет
+                if (!isset($itemsGrouped[$sku])) {
+                    $itemsGrouped[$sku] = [
+                        'product_sku'    => $sku,
+                        'product_name'   => $product->name ?? 'Неизвестно',
+                        'image'          => $product->image ?? null,
+                        'stock_quantity' => $product->stock_quantity ?? 0,
+                        'quantity'       => 0,
+                        'order_ids'      => [],
+                    ];
+                }
+
+                // накапливаем
+                $itemsGrouped[$sku]['quantity']     += $op->quantity;
+                $itemsGrouped[$sku]['order_ids'][]   = $order->order_number;
+            }
+        }
+
         
-        // Список производств
+
+        $this->items = collect($itemsGrouped)
+            ->map(function ($row) {
+                $row['order_id'] = implode(',', $row['order_ids']);
+                unset($row['order_ids']);
+                return $row;
+            })
+            ->values()
+            ->toArray();
+
+               // Список производств
         $this->factories = \App\Models\Factory::pluck('name', 'id')->toArray();
     }
     
