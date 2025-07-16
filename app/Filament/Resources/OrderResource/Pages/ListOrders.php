@@ -84,11 +84,14 @@ class ListOrders extends ListRecords
                         $archivedRows = $this->updateOrderStatusesFromHoroshop($inactiveStatuses);
                         $archivedRowsCount = count($archivedRows);
 
+                        // Видалення неактивних товарів з замовлень
+                        [$deletedProductsCount, $deletedOrdersCount] = $this->updateOrderProducts();
+
                         $result = $this->updateOrdersFromHoroshop();
                         
                         Notification::make()
                             ->title('Оновлення завершено')
-                            ->body("Додано {$result['created']} замовлень, оновлено {$result['updated']} замовлень, видалено {$archivedRowsCount}.")
+                            ->body("Додано {$result['created']} замовлень, оновлено {$result['updated']} замовлень, архівіровано {$archivedRowsCount},\nвидалено замовлень: {$deletedOrdersCount},\nвидалено товарів із замовлень: {$deletedProductsCount}")
                             ->success()
                             ->send();
                     }),
