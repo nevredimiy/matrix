@@ -211,7 +211,15 @@ class ListOrders extends ListRecords
             // --- товары этого заказа ---
             foreach ($ocOrder->products as $ocProduct) {
 
-                $localProductId = Product::where('product_id_oc', $ocProduct->product_id)->value('id');
+                // пропускаем НЕактивные товары
+                if (!in_array($ocProduct->product_id, $activeOcProductIds, true)) {
+                    continue;
+                }
+
+                $localProductId = Product::where('product_id_oc', $ocProduct->product_id)
+                    ->where('is_active', 1) 
+                    ->value('id');
+                    
                 if (!$localProductId) {
                     continue; // продукт ещё не завели
                 }
