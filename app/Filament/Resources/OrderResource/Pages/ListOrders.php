@@ -50,6 +50,9 @@ class ListOrders extends ListRecords
                     // Архівування/видалення
                     $archivedRows = $this->updateOrderStatuses($inactiveStatuses, $existingOrderNumbers);
 
+                    // Видалення неактивних товарів з замовлень
+                    [$deletedProductsCount, $deletedOrdersCount] = $this->updateOrderProducts;
+
                     // Синхронізація замовлень
                     $ordersForInsert = $this->updateOrders($inactiveStatuses, $existingOrderNumbers);
 
@@ -60,7 +63,7 @@ class ListOrders extends ListRecords
                     // Повідомлення
                     Notification::make()
                         ->title('Оновлення завершено')
-                        ->body("Оброблено замовлень: {$insertedCount},\nвидалено: {$archivedCount}")
+                        ->body("Оброблено замовлень: {$insertedCount},\nархівіровано: {$archivedCount},\nвидалено замовлень: {$deletedOrdersCount},\nвидалено товарів із замовлень: {$deletedProductsCount}")
                         ->success()
                         ->send();
                 }),
@@ -142,6 +145,24 @@ class ListOrders extends ListRecords
         });
 
         return $archiveRows;
+    }
+
+    public function updateOrderProducts(): array
+    {
+        return DB::transaction(function () {
+
+            // 1. ID неактивных товаров
+            $inactiveProductIds = Product::where('is_active', 0)->pluck('id');
+
+            // 2. Удаляем позиции товаров в заказах одним запросом
+            $deletedProductsCount = OrderProduct::whereIn('product_id', $inactiveProductIds)->delete();
+
+            // 3. Удаляем заказы, в которых больше нет товаров
+            //    (предполагаем, что связь называется orderProducts)
+            $deletedOrdersCount = Order::doesntHave('orderProducts')->delete();
+
+            return [$deletedProductsCount, $deletedOrdersCount];
+        });
     }
 
     // Добавление и обновление заказов
