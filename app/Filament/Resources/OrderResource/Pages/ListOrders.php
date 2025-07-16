@@ -51,7 +51,7 @@ class ListOrders extends ListRecords
                     $archivedRows = $this->updateOrderStatuses($inactiveStatuses, $existingOrderNumbers);
 
                     // Видалення неактивних товарів з замовлень
-                    [$deletedProductsCount, $deletedOrdersCount] = $this->updateOrderProducts;
+                    [$deletedProductsCount, $deletedOrdersCount] = $this->updateOrderProducts();
 
                     // Синхронізація замовлень
                     $ordersForInsert = $this->updateOrders($inactiveStatuses, $existingOrderNumbers);
