@@ -88,7 +88,8 @@ class ProductResource extends Resource
                     ->numeric()
                     ->sortable(),
                 ToggleColumn::make('is_active')
-                    ->label('Вкл/Викл'),
+                    ->label('Вкл/Викл')
+                    ->sortable(),
                 
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
