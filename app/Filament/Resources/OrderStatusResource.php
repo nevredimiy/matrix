@@ -21,7 +21,7 @@ class OrderStatusResource extends Resource
 {
     protected static ?string $model = OrderStatus::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-check-badge';
 
     protected static ?string $navigationLabel = 'Статуси замовлення';
 

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\FactoryOrderItemRelationManagerResource\RelationManagers\ItemsRelationManager;
 use App\Filament\Resources\FactoryOrderResource\Pages;
 use App\Filament\Resources\FactoryOrderResource\RelationManagers;
 use App\Models\FactoryOrder;
@@ -19,7 +20,7 @@ class FactoryOrderResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $navigationLabel = 'Замовлення на виробництво';
+    protected static ?string $navigationLabel = 'Список замовлень на виробництво';
 
 
     public static function form(Form $form): Form
@@ -41,12 +42,14 @@ class FactoryOrderResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')
+                    ->label('№ замовлення')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('factory_id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('factory.name')
+                    ->label('Виробництво')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
+                    ->label('Статус замовлення')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -61,19 +64,20 @@ class FactoryOrderResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                // Tables\Actions\BulkActionGroup::make([
+                //     Tables\Actions\DeleteBulkAction::make(),
+                // ]),
             ]);
     }
 
     public static function getRelations(): array
     {
         return [
-            //
+            // \App\Filament\Resources\FactoryOrderResource\RelationManagers\FactoryOrderItemRelationManager::class,
+            ItemsRelationManager::class
         ];
     }
 

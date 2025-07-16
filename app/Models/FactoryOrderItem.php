@@ -14,7 +14,7 @@ class FactoryOrderItem extends Model
         'quantity_delivered'
     ];
 
-    public function order()
+    public function factoryOrder()
     {
         return $this->belongsTo(FactoryOrder::class, 'factory_order_id');
     }
@@ -24,6 +24,5 @@ class FactoryOrderItem extends Model
         return $this->belongsTo(Product::class, 'product_id');
     }
 
-    
 
 }

@@ -17,9 +17,9 @@ class StoreResource extends Resource
 {
     protected static ?string $model = Store::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-building-storefront';
     
-    protected static ?string $navigationLabel = 'Магазины';
+    protected static ?string $navigationLabel = 'Магазини';
 
     protected static ?string $navigationGroup = 'Налаштування';
 

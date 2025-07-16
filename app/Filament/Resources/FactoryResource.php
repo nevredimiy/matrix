@@ -17,7 +17,7 @@ class FactoryResource extends Resource
 {
     protected static ?string $model = Factory::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
 
     protected static ?string $navigationLabel = 'Производства';
 
