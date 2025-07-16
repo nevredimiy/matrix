@@ -435,10 +435,20 @@ class ListOrders extends ListRecords
         }
 
         // Загружаем заказы с товарами и статусами
-        $orders = Order::with(['orderProducts.product', 'orderStatus'])
+        // $orders = Order::with(['orderProducts.product', 'orderStatus'])
+        //     ->where('store_id', 2)
+        //     ->whereIn('order_number', $orderIdsToArchive)
+        //     ->get();
+
+        $orders = Order::with([
+            'orderProducts.product',
+                // <‑‑ добавляем условие прямо тут
+                'orderStatus' => fn ($q) => $q->where('store_id', 2),
+            ])
             ->where('store_id', 2)
             ->whereIn('order_number', $orderIdsToArchive)
             ->get();
+
 
         // Готовим данные для arhived_orders
         $archiveRows = $orders->map(function (Order $order) {

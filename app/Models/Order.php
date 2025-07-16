@@ -47,8 +47,8 @@ class Order extends Model
 
     public function orderStatus()
     {
-        return $this->hasOne(OrderStatus::class, 'identifier', 'order_status_identifier')
-            ->whereColumn('order_statuses.store_id', 'orders.store_id');
+        return $this->hasOne(OrderStatus::class, 'identifier', 'order_status_identifier');
+            // ->whereColumn('order_statuses.store_id', 'orders.store_id');
     }
 
 
