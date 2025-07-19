@@ -29,6 +29,7 @@ class ProductResource extends Resource
     protected static ?string $navigationLabel = 'Товари';
 
     protected static ?string $navigationGroup = 'Налаштування';
+    protected static ?string $pluralModelLabel = 'Товари';
 
     public static function form(Form $form): Form
     {
@@ -154,7 +155,10 @@ class ProductResource extends Resource
         ];
     }
 
-
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
 
 
 }

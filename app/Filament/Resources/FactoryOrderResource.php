@@ -13,6 +13,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Actions\Action;
 
 class FactoryOrderResource extends Resource
 {
@@ -26,8 +27,9 @@ class FactoryOrderResource extends Resource
 
     protected static ?string $navigationGroup = 'Виробництво';
 
-    // protected static ?string $navigationParentItem = 'Налаштування';
+    protected static bool $shouldRegisterNavigation = false;  // Скрываем из меню
 
+    
 
     public static function form(Form $form): Form
     {
@@ -70,7 +72,10 @@ class FactoryOrderResource extends Resource
                 //
             ])
             ->actions([
-                
+                // Action::make('edit')
+                //     ->url(fn (Post $record): string => route('posts.edit', $record))
+                //     ->openUrlInNewTab()
+                                
             ])
             ->bulkActions([
                 // Tables\Actions\BulkActionGroup::make([

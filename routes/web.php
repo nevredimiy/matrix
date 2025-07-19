@@ -8,3 +8,7 @@ Route::get('/', function () {
 });
 
 Route::get('/test', [TestController::class, 'index'])->name('test');
+
+// Route::get('/admin/factory-missing-page', function () {
+//     return view('/filament/pages/factory-missing-page');
+// })->name('filament.pages.factory-missing-page');

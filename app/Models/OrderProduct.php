@@ -24,4 +24,10 @@ class OrderProduct extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
+    public function factoryOrderItems()
+    {
+        return $this->hasMany(FactoryOrderItem::class, 'product_id');
+    }
+
 }

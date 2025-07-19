@@ -24,5 +24,9 @@ class FactoryOrderItem extends Model
         return $this->belongsTo(Product::class, 'product_id');
     }
 
+    public function factoryOrderDelivery()
+    {
+        return $this->hasMany(FactoryOrderDelivery::class, 'factory_order_item_id', 'id');
+    }
 
 }
