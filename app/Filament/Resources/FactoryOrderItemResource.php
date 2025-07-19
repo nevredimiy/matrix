@@ -24,7 +24,13 @@ class FactoryOrderItemResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $navigationLabel = 'Замовлені товари на виробництво';
+    protected static ?string $navigationLabel = 'Замовлені товари';
+
+    protected static ?int $navigationSort = 9;
+
+    protected static ?string $navigationGroup = 'Виробництво';
+
+    protected static ?string $pluralModelLabel = 'Товари';
 
     public static function form(Form $form): Form
     {

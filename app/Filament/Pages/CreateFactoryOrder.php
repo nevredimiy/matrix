@@ -17,6 +17,8 @@ class CreateFactoryOrder extends Page
 
     protected static ?string $navigationLabel = 'Створити замовлення на виробницство';
 
+    protected static ?int $navigationSort = 10;
+
     public $items = [];
     public $factoryId = null;
     public $factories = [];

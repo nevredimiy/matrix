@@ -23,6 +23,8 @@ class OcProductResource extends Resource
 
     protected static ?string $navigationGroup = 'Общие настройки';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function form(Form $form): Form
     {
         return $form

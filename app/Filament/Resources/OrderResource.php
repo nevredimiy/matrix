@@ -27,7 +27,11 @@ class OrderResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-inbox-arrow-down';
 
-    protected static ?string $navigationLabel = 'Замовлення з магазинів';
+    protected static ?string $navigationLabel = 'Замовлення';
+
+    protected static ?string $pluralModelLabel = 'Замовлення';
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
@@ -74,6 +78,8 @@ class OrderResource extends Resource
                     ->addActionLabel('Додати товар'),
             ]);
     }
+
+   
 
     public static function table(Table $table): Table
     {
@@ -147,5 +153,11 @@ class OrderResource extends Resource
         return parent::getEloquentQuery()
             ->with('pivotProducts');
     }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
+
 
 }

@@ -19,7 +19,14 @@ class ArhivedOrderResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $navigationGroup = 'Общие настройки';
+    protected static ?string $navigationGroup = 'Налаштування';
+
+    protected static ?int $navigationSort = 5;
+
+    protected static ?string $pluralModelLabel = 'Архівні замовлення';
+    protected static ?string $navigationLabel = 'Архів';
+
+    
 
     public static function form(Form $form): Form
     {

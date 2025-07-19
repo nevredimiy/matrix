@@ -122,7 +122,7 @@ class ListProducts extends ListRecords
         foreach($products as $product){
 
             $image = empty($product['images']) ? ($product['gallery_common'][0] ?? '') : $product['images'][0];
-            $name = empty($product['title']['ua']) ? $product['title']['ru'] : $product['title']['ua'];
+            $name = empty($product['title']['ua']) ? $product['title']['en'] : $product['title']['ua'];
 
             $data = [
                 'name' => $name,
