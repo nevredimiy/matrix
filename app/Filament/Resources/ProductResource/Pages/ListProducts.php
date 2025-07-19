@@ -26,14 +26,14 @@ class ListProducts extends ListRecords
                 ->action(function () {
                     $this->updateOcProducts();
                 }),
-            // Action::make('update_products')
-            //     ->label('Оновити товари Horoshop')
-            //     ->color('info')
-            //     ->requiresConfirmation()
-            //     ->icon('heroicon-o-arrow-down-tray')
-            //     ->action(function () {
-            //         $this->updateHorProducts();
-            //     }),
+            Action::make('update_products_hor')
+                ->label('Оновити товари Horoshop')
+                ->color('info')
+                ->requiresConfirmation()
+                ->icon('heroicon-o-arrow-down-tray')
+                ->action(function () {
+                    $this->updateHorProducts();
+                }),
 
             Actions\CreateAction::make(),
         ];
@@ -46,8 +46,7 @@ class ListProducts extends ListRecords
 
     public function updateOcProducts()
     {
-        $existingProductIds = Product::where('is_active', 1)
-            ->pluck('product_id_oc')
+        $existingProductIds = Product::pluck('product_id_oc')
             ->toArray();
 
         $ocProducts = OcProduct::with(['description' => fn($q) => $q->where('language_id', 1)])
@@ -84,12 +83,11 @@ class ListProducts extends ListRecords
 
         foreach ($productsForUpdate as $updateData) {
             DB::table('products')
-                ->where('sku', $updateData['sku'])
+                ->where('product_id_oc', $updateData['product_id'])
                 ->update([
                     'name' => $updateData['name'],
                     'stock_quantity' => $updateData['stock_quantity'],
                     'image' => $updateData['image'],
-                    'product_id_oc' => $product['product_id']
                 ]);
         }
 
@@ -105,14 +103,12 @@ class ListProducts extends ListRecords
     public function updateHorProducts()
     {
 
-        $existingProductIds = Product::where('is_active', 0)
-            ->pluck('sku')
+        $existingProductIds = Product::pluck('sku')
             ->toArray();
 
         $response = app(\App\Services\HoroshopApiService::class)->call('catalog/export', [
             'expr' => [
                 'display_in_showcase' => 1,
-                'article' => $existingProductIds
             ]
         ]);
         dd($response);
