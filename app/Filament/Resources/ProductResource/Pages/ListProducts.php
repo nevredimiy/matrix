@@ -46,7 +46,9 @@ class ListProducts extends ListRecords
 
     public function updateOcProducts()
     {
-        $existingProductIds = Product::pluck('product_id_oc')
+        // $existingProductIds = Product::pluck('product_id_oc')
+        //     ->toArray();
+        $existingProductSkus = Product::pluck('sku')
             ->toArray();
 
         $ocProducts = OcProduct::with(['description' => fn($q) => $q->where('language_id', 1)])
@@ -70,7 +72,7 @@ class ListProducts extends ListRecords
                 'is_active' => true
             ];
 
-            if (in_array($product['product_id'], $existingProductIds)) {
+            if (in_array($product['model'], $existingProductSkus)) {
                 $productsForUpdate[] = $data;
             } else {
                 $productsForSave[] = $data;
@@ -83,7 +85,7 @@ class ListProducts extends ListRecords
 
         foreach ($productsForUpdate as $updateData) {
             DB::table('products')
-                ->where('product_id_oc', $updateData['product_id'])
+                ->where('sku', $updateData['sku'])
                 ->update([
                     'name' => $updateData['name'],
                     'stock_quantity' => $updateData['stock_quantity'],
@@ -103,7 +105,7 @@ class ListProducts extends ListRecords
     public function updateHorProducts()
     {
 
-        $existingProductIds = Product::pluck('sku')
+        $existingProductSkus = Product::pluck('sku')
             ->toArray();
 
         $response = app(\App\Services\HoroshopApiService::class)->call('catalog/export', [
@@ -111,25 +113,51 @@ class ListProducts extends ListRecords
                 'display_in_showcase' => 1,
             ]
         ]);
-        dd($response);
 
         $products = $response['response']['products'] ?? [];
 
-        $productsForSave = [];
+        $productsForInsert = [];
         $productsForUpdate = [];
 
         foreach($products as $product){
 
             $image = empty($product['images']) ? ($product['gallery_common'][0] ?? '') : $product['images'][0];
+            $name = empty($product['title']['ua']) ? $product['title']['ru'] : $product['title']['ua'];
 
             $data = [
-                'name' => $product['title']['ua'],
+                'name' => $name,
                 'sku' => $product['article'],
-                'stock_quantity' => 0,
+                'stock_quantity' => $product['quantity'],
                 'image' => $image,
-                'product_id_hor' => $product['product_id'],
-                'is_active' => true
+                'is_active' => false
             ];
+
+            if (in_array($product['article'], $existingProductSkus)) {
+                $productsForUpdate[] = $data;
+            } else {
+                $productsForInsert[] = $data;
+            }
         }
+
+        if (!empty($productsForInsert)) {
+            DB::table('products')->insert($productsForInsert);
+        }
+
+        foreach ($productsForUpdate as $updateData) {
+            DB::table('products')
+                ->where('sku', $updateData['sku'])
+                ->update([
+                    'name' => $updateData['name'],
+                    'stock_quantity' => $updateData['stock_quantity'],
+                    'image' => $updateData['image'],
+                ]);
+        }
+
+        // Уведомление прямо здесь:
+        Notification::make()
+            ->title('Оновлення завершено')
+            ->body('Додано: ' . count($productsForInsert) . ', оновлено: ' . count($productsForUpdate))
+            ->success()
+            ->send();
     }
 }
