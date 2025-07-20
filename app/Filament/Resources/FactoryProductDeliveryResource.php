@@ -48,8 +48,7 @@ class FactoryProductDeliveryResource extends Resource
                             ->displayFormat('d F Y')
                             ->default(now())
                             ->locale('uk'),
-                        Forms\Components\Select::make('delivered_by')
-                            ->relationship(name: 'user', titleAttribute: 'name')
+                        Forms\Components\TextInput::make('delivered_by')
                              ->label('Кем отгружено')
                     ])
                     ->columnSpan('full')
@@ -72,9 +71,8 @@ class FactoryProductDeliveryResource extends Resource
                     ->label('Дата відгрузки')
                     ->dateTime()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('user.name')
+                Tables\Columns\TextColumn::make('delivered_by')
                     ->label('Відгружено')
-                    ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()

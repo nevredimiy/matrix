@@ -16,9 +16,7 @@ return new class extends Migration
             $table->foreignId('product_id')->nullable()->constrained('products')->nullOnDelete();
             $table->unsignedInteger('quantity'); // общее количество отгруженного товара
             $table->timestamp('delivered_at')->nullable(); // дата отгрузки
-            // $table->foreignId('delivered_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->unsignedBigInteger('delivered_by')->nullable();
-            $table->foreign('delivered_by')->references('id')->on('users')->nullOnDelete();
+            $table->string('delivered_by')->nullable();            
             $table->timestamps();
         });
     }
