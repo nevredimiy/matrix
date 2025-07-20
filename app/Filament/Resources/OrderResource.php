@@ -20,6 +20,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Actions\BulkAction;
+use Filament\Tables\Columns\IconColumn;
 
 class OrderResource extends Resource
 {
@@ -84,6 +85,7 @@ class OrderResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultSort('order_number', 'desc')
             ->columns([
                 TextColumn::make('order_number')
                     ->label('Номер заказа')
@@ -94,24 +96,21 @@ class OrderResource extends Resource
                     ->tooltip(fn ($record) => $record->pivotProducts->pluck('sku')->implode(', '))
                     ->searchable(),
                 TextColumn::make('store.name')->label('Магазин')->sortable()->searchable(),
-                TextColumn::make('status')->label('Статус')->sortable(),
+                IconColumn::make('status')
+                    ->icon(fn (string $state): string => match ($state) {
+                        'ready' => 'heroicon-o-check-circle',
+                        'in_progress' => 'heroicon-o-clock',
+                    })
+                    ->color(fn (string $state): string => match ($state) {
+                        'ready' => 'success',
+                        'in_progress' => 'warning',
+                        default => 'gray',
+                    }),
                 TextColumn::make('order_date')->label('Дата заказа')->date()->sortable(),
                 TextColumn::make('products_count')->counts('products')->label('Кол-во тов.'),
-                // TextColumn::make('products.product.sku')
-                //     ->badge()
-                //     ->separator(',')
-                // TextColumn::make('products_skus')
-                //     ->label('Артикулы')
-                //     ->getStateUsing(function ($record) {
-                //         return $record->pivotProducts->pluck('sku')->implode(', ');
-                //     })
-                    
-                //     // ->toggleable()
-                //     ->limit(50) // если хочешь ограничить длину вывода
-                //     ->tooltip(fn ($record) => $record->pivotProducts->pluck('name')->implode(', ')), // полный список в tooltip
+               
                     
             ])
-            ->defaultSort('order_date', 'desc')
             ->filters([
                 //
             ])

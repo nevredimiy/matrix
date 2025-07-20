@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\StoreResource\Pages;
-use App\Filament\Resources\StoreResource\RelationManagers;
-use App\Models\Store;
+use App\Filament\Resources\FactoryOrderDeliveryResource\Pages;
+use App\Filament\Resources\FactoryOrderDeliveryResource\RelationManagers;
+use App\Models\FactoryOrderDelivery;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -13,28 +13,28 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class StoreResource extends Resource
+class FactoryOrderDeliveryResource extends Resource
 {
-    protected static ?string $model = Store::class;
+    protected static ?string $model = FactoryOrderDelivery::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-building-storefront';
-    
-    protected static ?string $navigationLabel = 'Магазини';
+    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $navigationGroup = 'Налаштування';
-    protected static ?int $navigationSort = 20;
+    protected static ?string $navigationGroup = 'temp';
+
+        protected static ?int $navigationSort = 99;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->label('Назва')
+                Forms\Components\TextInput::make('factory_order_item_id')
                     ->required()
-                    ->maxLength(191),
-                Forms\Components\TextInput::make('address')
-                    ->label('Адреса')
-                    ->maxLength(191),
+                    ->numeric(),
+                Forms\Components\DateTimePicker::make('delivered_at')
+                    ->required(),
+                Forms\Components\TextInput::make('quantity')
+                    ->required()
+                    ->numeric(),
             ]);
     }
 
@@ -42,12 +42,15 @@ class StoreResource extends Resource
     {
         return $table
             ->columns([
-                 Tables\Columns\TextColumn::make('name')
-                    ->label('Назва')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('address')
-                    ->label('Адреса')
-                    ->searchable(),
+                Tables\Columns\TextColumn::make('factory_order_item_id')
+                    ->numeric()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('delivered_at')
+                    ->dateTime()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('quantity')
+                    ->numeric()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -80,9 +83,9 @@ class StoreResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListStores::route('/'),
-            'create' => Pages\CreateStore::route('/create'),
-            'edit' => Pages\EditStore::route('/{record}/edit'),
+            'index' => Pages\ListFactoryOrderDeliveries::route('/'),
+            'create' => Pages\CreateFactoryOrderDelivery::route('/create'),
+            'edit' => Pages\EditFactoryOrderDelivery::route('/{record}/edit'),
         ];
     }
 }

@@ -23,11 +23,11 @@ class FactoryOrderResource extends Resource
 
     protected static ?string $navigationLabel = 'Список замовлень';
 
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 99;
 
-    protected static ?string $navigationGroup = 'Виробництво';
+    protected static ?string $navigationGroup = 'temp';
 
-    protected static bool $shouldRegisterNavigation = false;  // Скрываем из меню
+    // protected static bool $shouldRegisterNavigation = false;  // Скрываем из меню
 
     
 

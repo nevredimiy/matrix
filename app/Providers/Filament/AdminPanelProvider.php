@@ -21,6 +21,8 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Filament\Navigation\NavigationItem;
 use App\Filament\Resources\AdminResource\Widgets\OrdersProductsTable;
+use App\Filament\Resources\FactoryOrderItemResource\Widgets\StatsProductOverview;
+use App\Filament\Widgets\FactoryOrderItemStats;
 use App\Models\FactoryOrderItem;
 use Filament\Navigation\NavigationGroup;
 
@@ -47,6 +49,7 @@ class AdminPanelProvider extends PanelProvider
                 // Widgets\FilamentInfoWidget::class,
 
                 OrdersProductsTable::class,
+                FactoryOrderItemStats::class,
             ])
             ->middleware([
                 EncryptCookies::class,

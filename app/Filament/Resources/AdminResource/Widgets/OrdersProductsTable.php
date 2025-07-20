@@ -12,7 +12,7 @@ use Filament\Tables\Grouping\Group;
 
 class OrdersProductsTable extends BaseWidget implements Tables\Contracts\HasTable
 {
-    protected int | string | array $columnSpan = 'full';  
+    // protected int | string | array $columnSpan = 'full';  
 
     protected static ?string $pluralModelLabel = 'Заказанные продукты';
 
@@ -41,13 +41,6 @@ class OrdersProductsTable extends BaseWidget implements Tables\Contracts\HasTabl
                 
                 TextColumn::make('product.sku')->label('SKU'),
                 TextColumn::make('quantity')->label('Заказано'),
-                TextColumn::make('product.stock_quantity')->label('На складе'),
-                TextColumn::make('product.desired_stock_quantity')->label('Желаем'),
-                TextColumn::make('factory_order_items_count')
-                    ->label('На производстве')
-                    ->getStateUsing(function ($record) {
-                        return $record->factoryOrderItems()->count();
-                    }),
             ]);
     }
 }

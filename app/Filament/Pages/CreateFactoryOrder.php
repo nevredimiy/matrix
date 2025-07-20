@@ -131,7 +131,7 @@ class CreateFactoryOrder extends Page
                         if ($productId) {
                             $factoryOrder->items()->create([
                                 'product_id'        => $productId,
-                                'quantity_ordered'  => $item['quantity'],
+                                'quantity_ordered'  => $item['required_quantity'],
                                 // если есть, можете сразу добавить required_quantity, quantity_delivered и т.д.
                             ]);
                         }

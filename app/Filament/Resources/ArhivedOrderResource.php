@@ -21,7 +21,7 @@ class ArhivedOrderResource extends Resource
 
     protected static ?string $navigationGroup = 'Налаштування';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 50;
 
     protected static ?string $pluralModelLabel = 'Архівні замовлення';
     protected static ?string $navigationLabel = 'Архів';

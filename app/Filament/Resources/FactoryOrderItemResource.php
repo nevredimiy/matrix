@@ -19,6 +19,10 @@ class FactoryOrderItemResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    protected static ?string $navigationGroup = 'temp';
+
+     protected static ?int $navigationSort = 99;
+
     public static function form(Form $form): Form
     {
         return $form

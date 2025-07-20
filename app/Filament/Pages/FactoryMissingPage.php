@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\FactoryOrderDelivery;
 use App\Models\FactoryOrderItem;
 use Filament\Pages\Page;
 use Filament\Tables;
@@ -9,6 +10,7 @@ use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Filament\Tables\Actions\Action;
 
 class FactoryMissingPage extends Page implements HasTable
 {
@@ -56,10 +58,6 @@ class FactoryMissingPage extends Page implements HasTable
                     ->orderByDesc('missing_quantity')
             )
             ->columns([
-                TextColumn::make('product.name')
-                    ->label('Назва')
-                    ->numeric()
-                    ->sortable(),
                 TextColumn::make('product.sku')
                     ->label('Арт.')
                     ->sortable()
@@ -68,6 +66,10 @@ class FactoryMissingPage extends Page implements HasTable
                     ->label('На изготовление, шт')
                     ->sortable()
                     ->numeric(),
+                 TextColumn::make('product.name')
+                    ->label('Назва')
+                    ->numeric()
+                    ->sortable(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -77,6 +79,11 @@ class FactoryMissingPage extends Page implements HasTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
            
+            ])
+             ->headerActions([
+                Action::make('factory_order_delivery')
+                    ->label('Отгрузка')
+                    ->url(route('filament.admin.resources.factory-order-items.edit', $this->factory_id))
             ]);
     }
 
