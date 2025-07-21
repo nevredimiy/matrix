@@ -75,7 +75,7 @@
                                 />
                             </td>
                             <td class="px-4 py-2 text-gray-900 dark:text-gray-100">
-                                {{ $item['order_id'] }}
+                                {{ $item['text_order_ids'] }}
                             </td>
                             <td class="px-4 py-2 text-gray-900 dark:text-gray-100">
                                 <select 

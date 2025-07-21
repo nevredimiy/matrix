@@ -31,7 +31,7 @@ class CreateFactoryOrder extends Page
 
         $orders = Order::whereIn('id', $orderIds)->get();
 
-        $itemsGrouped = [];   // ← массив вместо collect()
+        $itemsGrouped = []; 
 
         foreach ($orders as $order) {
             foreach ($order->orderProducts as $op) {
@@ -50,6 +50,7 @@ class CreateFactoryOrder extends Page
                         'image'          => $product->image ?? null,
                         'stock_quantity' => $product->stock_quantity ?? 0,
                         'quantity'       => 0,
+                        'desired_stock_quantity' => $product->desired_stock_quantity ?? 0,
                         'order_ids'      => [],
                         'factory_id'       => 1
                     ];
@@ -63,10 +64,10 @@ class CreateFactoryOrder extends Page
 
         $this->items = collect($itemsGrouped)
             ->map(function ($row) {
-                $row['order_id'] = implode(',', $row['order_ids']);
+                $row['text_order_ids'] = implode(',', $row['order_ids']);
                 unset($row['order_ids']);
 
-                $requiredQuantity = $row['quantity'] - $row['stock_quantity'] > 0 ? $row['quantity'] - $row['stock_quantity'] : 0;
+                $requiredQuantity = $row['desired_stock_quantity'] + $row['quantity'] - $row['stock_quantity'] > 0 ? $row['desired_stock_quantity'] + $row['quantity'] - $row['stock_quantity'] : 0;
                 $row['required_quantity'] = $requiredQuantity;
 
                 return $row;
@@ -78,7 +79,7 @@ class CreateFactoryOrder extends Page
         $this->products = \App\Models\Product::pluck('sku')->toArray();
     }
     
-
+    //  Это нужно для нового товара, что бы подятгивались данные
     public function updatedItems($value, $name)
     {
         // $name приходит как "0.product_sku" или "1.product_sku" и т.п.
@@ -110,11 +111,11 @@ class CreateFactoryOrder extends Page
 
         // 1. Группируем товары по фабрикам
         $groups = collect($this->items)->groupBy('factory_id');
-
+  
         try {
             // 2. Гарантируем целостность данных
             DB::transaction(function () use ($groups) {
-
+                $allOrdersText = '';
                 foreach ($groups as $factoryId => $items) {
 
                     /** @var FactoryOrder $factoryOrder */
@@ -125,6 +126,8 @@ class CreateFactoryOrder extends Page
 
                     // 3. Заполняем строки заказа
                     foreach ($items as $item) {
+
+                        $allOrdersText .= $item['text_order_ids'];
                         // вытаскиваем id товара по SKU (value() быстрее first()->id)
                         $productId = Product::where('sku', $item['product_sku'])->value('id');
 
@@ -137,6 +140,10 @@ class CreateFactoryOrder extends Page
                         }
                     }
                 }
+
+                $allOrders = array_filter(array_map('trim', explode(',', $allOrdersText)));
+
+                Order::whereIn('order_number', $allOrders)->update(['status' => 'in_progress']);
             });
 
             Notification::make()
@@ -162,7 +169,7 @@ class CreateFactoryOrder extends Page
     public function addEmptyItem()
     {
         $this->items[] = [
-            'order_id' => null,
+            'text_order_ids' => null,
             'product_sku' => '',
             'product_name' => '',
             'image' => null,

@@ -21,6 +21,9 @@ use Filament\Forms\Components\Repeater;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Enums\FiltersLayout;
+
 
 class OrderResource extends Resource
 {
@@ -94,17 +97,32 @@ class OrderResource extends Resource
                     //     return $record->pivotProducts->pluck('sku')->implode(', ');
                     // })
                     ->tooltip(fn ($record) => $record->pivotProducts->pluck('sku')->implode(', '))
-                    ->searchable(),
+                    ->searchable()
+                    ->description(function ($record) {
+                        return $record->pivotProducts
+                            ->map(fn ($product) => $product->sku . ' - ' . $product->pivot->quantity . 'шт')
+                            ->implode(', ');
+                    }),
                 TextColumn::make('store.name')->label('Магазин')->sortable()->searchable(),
-                IconColumn::make('status')
+                TextColumn::make('status')
                     ->icon(fn (string $state): string => match ($state) {
                         'ready' => 'heroicon-o-check-circle',
                         'in_progress' => 'heroicon-o-clock',
+                        'new' => 'heroicon-o-fire',
+                        default => 'heroicon-o-exclamation-circle'
                     })
                     ->color(fn (string $state): string => match ($state) {
                         'ready' => 'success',
                         'in_progress' => 'warning',
-                        default => 'gray',
+                        'new' => 'danger',
+                        default => 'info',
+                    })
+                    ->label('Статус') // Заголовок колонки
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'ready' => 'Готово',
+                        'in_progress' => 'В процессе',
+                        'new' => 'Новый',
+                        default => 'Неизвестно',
                     }),
                 TextColumn::make('order_date')->label('Дата заказа')->date()->sortable(),
                 TextColumn::make('products_count')->counts('products')->label('Кол-во тов.'),
@@ -112,8 +130,14 @@ class OrderResource extends Resource
                     
             ])
             ->filters([
-                //
-            ])
+                SelectFilter::make('status')
+                    ->label('Статус')
+                    ->options([
+                        'ready' => 'Готові',
+                        'in_progress' => 'В процесі',
+                        'new' => 'Нові',
+                    ])
+            ], layout: FiltersLayout::AboveContent)
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),

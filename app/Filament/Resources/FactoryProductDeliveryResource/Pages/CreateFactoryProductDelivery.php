@@ -17,9 +17,13 @@ class CreateFactoryProductDelivery extends CreateRecord
     protected function beforeCreate(): void
     {
 
-        foreach ($this->data['Товар'] as $item) {
+        foreach ($this->data['product'] as $item) {
             FactoryProductDelivery::create($item);
             
+            // Есле проиводство незадано, то ставим 1 - первое
+            if(!$item['factory_id']){
+                $item['factory_id'] = 1; 
+            }
             // Обновляем таблицу  factory_ order_items
             $this->updateFactoryOrderItem($item);
         }
@@ -34,11 +38,16 @@ class CreateFactoryProductDelivery extends CreateRecord
 
     protected function updateFactoryOrderItem($item)
     {
-        $countProductDelivery = $item['quantity'];
-
-        $factoryOrderIteams = FactoryOrderItem::all();
-
-        $factoryOrders = FactoryOrder::all();
+        $factoryOrderItem = FactoryOrderItem::where('product_id', $item['product_id'])
+            ->whereHas('factoryOrder', function ($q) use($item) {
+                $q->where('factory_id', $item['factory_id']);
+            })
+            ->first();
+            
+        if ($factoryOrderItem) {
+            $factoryOrderItem->quantity_delivered += $item['quantity'];
+            $factoryOrderItem->save();
+        }
     }
 
   

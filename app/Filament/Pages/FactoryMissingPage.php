@@ -38,8 +38,6 @@ class FactoryMissingPage extends Page implements HasTable
    
     public function table(Table $table): Table
     {
-        $factory_id = request()->get('factory_id');
-
          return $table
             ->query(
                 FactoryOrderItem::query()
@@ -83,7 +81,7 @@ class FactoryMissingPage extends Page implements HasTable
              ->headerActions([
                 Action::make('factory_order_delivery')
                     ->label('Отгрузка')
-                    ->url(route('filament.admin.resources.factory-order-items.edit', $this->factory_id))
+                    ->url(route('filament.admin.resources.factory-product-deliveries.create', ['factory_id' => $this->factory_id]))
             ]);
     }
 

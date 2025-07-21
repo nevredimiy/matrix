@@ -194,7 +194,7 @@ class ListOrders extends ListRecords
             $orderPayload = [
                 'order_number'            => $ocOrder->order_id,
                 'store_id'                => 1,
-                'status'                  => 'відкритий',
+                'status'                  => 'new',
                 'order_status_identifier' => $ocOrder->order_status_id,
                 'order_date'              => $ocOrder->date_added,
                 'updated_at'              => now(),

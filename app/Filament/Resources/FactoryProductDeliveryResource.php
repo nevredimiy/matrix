@@ -6,6 +6,7 @@ use App\Filament\Resources\FactoryProductDeliveryResource\Pages;
 use App\Filament\Resources\FactoryProductDeliveryResource\RelationManagers;
 use App\Models\FactoryProductDelivery;
 use Filament\Forms;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -30,9 +31,11 @@ class FactoryProductDeliveryResource extends Resource
 
     public static function form(Form $form): Form
     {
+        $factory_id = request()->get('factory_id');
         return $form
             ->schema([
-                Repeater::make('Товар')
+                Repeater::make('product')
+                    ->label('Товар')
                     ->schema([
                         Forms\Components\Select::make('product_id')
                             ->relationship(name: 'product', titleAttribute: 'sku')
@@ -49,7 +52,9 @@ class FactoryProductDeliveryResource extends Resource
                             ->default(now())
                             ->locale('uk'),
                         Forms\Components\TextInput::make('delivered_by')
-                             ->label('Кем отгружено')
+                             ->label('Кем отгружено'),
+                        Hidden::make('factory_id')
+                            ->default(fn () => request()->get('factory_id')),
                     ])
                     ->columnSpan('full')
                     ->columns(4)
