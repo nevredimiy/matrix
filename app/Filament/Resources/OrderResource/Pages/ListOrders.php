@@ -381,7 +381,7 @@ class ListOrders extends ListRecords
                 $ordersToUpsert[] = [
                     'order_number'            => $order['order_id'],
                     'store_id'                => 2,
-                    'status'                  => 'відкритий',
+                    'status'                  => 'new',
                     'order_status_identifier' => $order['stat_status'],
                     'order_date'              => $order['stat_created'],
                     'updated_at'              => now(),

@@ -7,11 +7,11 @@ set -e
 
 echo "Starting deployment..."
 git pull origin main
-php8.4 artisan down
-php8.4 composer.phar install --no-dev --optimize-autoloader
-php8.4 artisan migrate --force
-php8.4 artisan config:cache
-php8.4 artisan route:cache
-php8.4 artisan view:cache
-php8.4 artisan up
+php artisan down
+php composer.phar install --no-dev --optimize-autoloader
+php artisan migrate --force
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan up
 echo "Deployment completed successfully."

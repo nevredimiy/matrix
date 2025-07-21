@@ -10,8 +10,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Columns\TextColumn;
 
 class FactoryOrderItemResource extends Resource
 {
@@ -46,24 +45,34 @@ class FactoryOrderItemResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultSort('id', 'desc')
             ->columns([
-                Tables\Columns\TextColumn::make('factory_order_id')
+                TextColumn::make('factory_order_id')
+                    ->numeric()
+                    ->label('№')
+                    ->sortable(),
+                TextColumn::make('product.sku')
+                    ->label('Арт.')
+                    ->tooltip(fn ($record) => $record->product->name ?? null)
+                    ->sortable(),
+                TextColumn::make('quantity_ordered')
+                    ->label('Кіл-ть')
+                    ->tooltip('Кількість штук, які замовлені в магазині')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('product_id')
+                TextColumn::make('quantity_delivered')
+                    ->label('Від-но')
+                    ->tooltip('Відвантажено з виробництва, шт.')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('quantity_ordered')
-                    ->numeric()
+                TextColumn::make('factoryOrder.factory.name')
+                    ->label('Куди')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('quantity_delivered')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

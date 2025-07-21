@@ -50,12 +50,23 @@ class OrderResource extends Resource
                     ->label('Магазин')
                     ->relationship('store', 'name')
                     ->searchable()
-                    ->required(),
+                    ->required()
+                    ->preload(),
+
+                
 
                 DatePicker::make('order_date')
                     ->label('Дата заказа')
                     ->default(now())
                     ->required(),
+
+                Select::make('status')
+                    ->label('Статус')
+                    ->options([
+                        'new' => 'Новий',
+                        'in_proogress' => 'В процесі',
+                        'ready' => 'Готовий',
+                    ]),
 
                 Repeater::make('products')
                     ->relationship() // указывает что это hasMany по products

@@ -21,26 +21,30 @@ class OrdersProductsTable extends BaseWidget implements Tables\Contracts\HasTabl
         return 'Последние товары в заказах';
     }
 
-    
+
     public function table(Table $table): Table
     {
         return $table
+            ->query(
+                OrderProduct::query()
+                    ->with(['order', 'product', 'factoryOrderItems'])
+                    ->latest()
+            )
             ->heading('Заказа с товарами')
             ->description('Общая картина заказанных товаров')
             ->groups([
                 Group::make('order.id')
-                    ->label('Заказ'),
+                    ->label('по заказам'),
+                Group::make('product.sku')
+                    ->label('по товарам'),
+
             ])
-            ->defaultGroup('order.id')
-            ->query(
-                 OrderProduct::query()
-                    ->with(['order', 'product', 'factoryOrderItems']) 
-                    ->latest()
-            )
+            // ->defaultGroup('order.id')
             ->columns([
-                
+
                 TextColumn::make('product.sku')->label('SKU'),
                 TextColumn::make('quantity')->label('Заказано'),
+
             ]);
     }
 }

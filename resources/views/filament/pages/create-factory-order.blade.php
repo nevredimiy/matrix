@@ -17,6 +17,7 @@
                         <th class="px-4 py-3 text-left text-gray-600 dark:text-gray-300">Артикул</th>
                         <th class="px-4 py-3 text-left text-gray-600 dark:text-gray-300">На складе</th>
                         <th class="px-4 py-3 text-left text-gray-600 dark:text-gray-300">В заказах</th>
+                        <th class="px-4 py-3 text-left text-gray-600 dark:text-gray-300">Желаемое кол-во</th>
                         <th class="px-4 py-3 text-left text-gray-600 dark:text-gray-300">К производству</th>
                         <th class="px-4 py-3 text-left text-gray-600 dark:text-gray-300">Заказы</th>
                         <th class="px-4 py-3 text-left text-gray-600 dark:text-gray-300">Действие</th>
@@ -64,6 +65,9 @@
                             <td class="px-4 py-2 text-gray-900 dark:text-gray-100">
                                 {{ $item['quantity'] }}
                             </td>
+                            <td class="px-4 py-2 text-gray-900 dark:text-gray-100">
+                                {{ $item['desired_stock_quantity'] }}
+                            </td>
                             <td class="px-4 py-2">
                                 <input
                                     type="number"
@@ -74,6 +78,7 @@
                                     class="w-20 border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
                                 />
                             </td>
+                            
                             <td class="px-4 py-2 text-gray-900 dark:text-gray-100">
                                 {{ $item['text_order_ids'] }}
                             </td>
