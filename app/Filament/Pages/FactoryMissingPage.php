@@ -90,4 +90,6 @@ class FactoryMissingPage extends Page implements HasTable
     {
         return static::getModel()::count();
     }
+
+  
 }

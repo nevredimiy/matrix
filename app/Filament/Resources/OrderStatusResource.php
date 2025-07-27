@@ -125,4 +125,8 @@ class OrderStatusResource extends Resource
             'edit' => Pages\EditOrderStatus::route('/{record}/edit'),
         ];
     }
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->user()?->hasRole('admin'); // только для админа
+    }
 }

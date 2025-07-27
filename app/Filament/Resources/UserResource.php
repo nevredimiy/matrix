@@ -37,14 +37,29 @@ class UserResource extends Resource
                     ->email()
                     ->required()
                     ->maxLength(191),
-                Forms\Components\DateTimePicker::make('email_verified_at'),
+                Forms\Components\DateTimePicker::make('email_verified_at')
+                    ->label('Дата підтвердження email')
+                    ->default(now())
+                    ->required(fn(string $context) => $context === 'create')
+                    ->visibleOn('create', 'edit'),
                 Forms\Components\TextInput::make('password')
+                    ->label('Пароль')
                     ->password()
-                    ->maxLength(191)
+                    ->maxLength(255)
                     ->revealable()
-                    ->dehydrateStateUsing(fn ($state) => filled($state) ? Hash::make($state) : null)
-                    ->required(fn (string $context): bool => $context === 'create'),
-                Forms\Components\Toggle::make('is_admin')
+                    ->dehydrateStateUsing(fn($state) => filled($state) ? bcrypt($state) : null)
+                    ->required(fn(string $context) => $context === 'create')
+                    ->visibleOn('create', 'edit'),
+                Forms\Components\Select::make('role')
+                    ->label('Роль')
+                    ->options([
+                        'admin' => 'Адміністратор',
+                        'user' => 'Користувач',
+                        'factory1' => 'Завод 1',
+                        'factory2' => 'Завод 2',    
+                        'warehouse' => 'Склад',
+                    ])
+                    ->default('user')
                     ->required(),
             ]);
     }
@@ -68,8 +83,19 @@ class UserResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\IconColumn::make('is_admin')
-                    ->boolean(),
+                Tables\Columns\TextColumn::make('role')
+                    ->label('Роль')
+                    ->formatStateUsing(function ($state) {
+                        return match ($state) {
+                            'admin' => 'Адміністратор',
+                            'user' => 'Користувач',
+                            'factory1' => 'Завод 1',
+                            'factory2' => 'Завод 2',
+                            'warehouse' => 'Склад',
+                            default => 'Невідомо',
+                        };
+                    })
+                    
             ])
             ->filters([
                 //
@@ -98,5 +124,10 @@ class UserResource extends Resource
             'create' => Pages\CreateUser::route('/create'),
             'edit' => Pages\EditUser::route('/{record}/edit'),
         ];
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->user()?->hasRole('admin'); // только для админа
     }
 }

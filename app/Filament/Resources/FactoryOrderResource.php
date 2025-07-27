@@ -14,6 +14,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Actions\Action;
+use Illuminate\Support\Facades\Auth;
 
 class FactoryOrderResource extends Resource
 {
@@ -99,5 +100,11 @@ class FactoryOrderResource extends Resource
             'create' => Pages\CreateFactoryOrder::route('/create'),
             'edit' => Pages\EditFactoryOrder::route('/{record}/edit'),
         ];
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return Auth::user()?->hasRole('admin'); // только для админа
+     
     }
 }

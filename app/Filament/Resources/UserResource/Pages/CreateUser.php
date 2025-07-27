@@ -9,4 +9,11 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateUser extends CreateRecord
 {
     protected static string $resource = UserResource::class;
+
+    public function BeforeCreate(): void
+    {
+        $this->form->fill([
+            'is_admin' => true,
+        ]);
+    }
 }

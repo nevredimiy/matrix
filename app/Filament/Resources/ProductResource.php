@@ -174,5 +174,8 @@ class ProductResource extends Resource
         return static::getModel()::count();
     }
 
-
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->user()?->hasRole('admin'); // только для админа
+    }
 }

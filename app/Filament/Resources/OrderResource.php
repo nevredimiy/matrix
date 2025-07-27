@@ -136,9 +136,7 @@ class OrderResource extends Resource
                         default => 'Неизвестно',
                     }),
                 TextColumn::make('order_date')->label('Дата заказа')->date()->sortable(),
-                TextColumn::make('products_count')->counts('products')->label('Кол-во тов.'),
-               
-                    
+                TextColumn::make('products_count')->counts('products')->label('Кол-во тов.'),                    
             ])
             ->filters([
                 SelectFilter::make('status')
@@ -192,6 +190,12 @@ class OrderResource extends Resource
     {
         return static::getModel()::count();
     }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->user()?->hasRole('admin'); // только для админа
+    }
+
 
 
 }

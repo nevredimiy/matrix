@@ -105,4 +105,8 @@ class ArhivedOrderResource extends Resource
             'edit' => Pages\EditArhivedOrder::route('/{record}/edit'),
         ];
     }
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->user()?->hasRole('admin'); // только для админа
+    }
 }

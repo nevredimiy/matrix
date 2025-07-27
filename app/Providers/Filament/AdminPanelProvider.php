@@ -36,6 +36,11 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->profile()            
             ->login()
+            ->registration()
+            ->passwordReset()
+            ->brandName('Dinara CRTM')
+            ->brandLogo(fn () => view('filament.admin.logo'))
+            ->brandLogoHeight('50px')
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -70,8 +75,7 @@ class AdminPanelProvider extends PanelProvider
                 FactoryMissingPage::class,
             ])
             
-            ->navigationItems([
-              
+            ->navigationItems([              
                 NavigationItem::make('Заказы - Пр. №1')
                     ->url(fn () => FactoryMissingPage::getUrl(['factory_id' => 1]))
                     ->icon('heroicon-o-truck')
@@ -98,9 +102,7 @@ class AdminPanelProvider extends PanelProvider
                             })
                             ->distinct('product_id')
                             ->count();
-                    }),
-                    
-                    
+                    }),                    
             ]);            
         
     }

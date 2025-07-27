@@ -214,6 +214,10 @@ class CreateFactoryOrder extends Page
 
     }
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->user()?->hasRole('admin'); // только для админа
+    }
    
 
 
