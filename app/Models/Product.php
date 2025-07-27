@@ -17,4 +17,14 @@ class Product extends Model
         'product_id_oc',
         'product_id_hor',
     ];
+
+    public function factoryModelCount()
+    {
+        return $this->hasOne(FactoryModelCount::class, 'product_id', 'id');
+    }
+    
+    public function factoryOrderItem()
+    {
+        return $this->hasOne(FactoryOrderItem::class, 'product_id', 'id');
+    }
 }

@@ -27,8 +27,6 @@
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                     @foreach ($this->items as $index => $item)
                         <tr>
-                         
-
                             <td class="px-4 py-2">
                                 @if ($item['image'])
                                     <img src="{{ $item['image'] }}" alt="" class="h-10 w-10 rounded-md object-cover">
@@ -39,15 +37,6 @@
                             <td class="px-4 py-2 text-gray-900 dark:text-gray-100">
                                 {{ $item['product_name'] }}
                             </td>
-                            {{-- <td class="px-4 py-2 text-gray-900 dark:text-gray-100">
-                                <input 
-                                    type="text" 
-                                    wire:model.live="items.{{ $index }}.product_sku"
-                                    class="w-24 border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
-                                    value="{{ $item['product_sku'] ?? ''}}"
-                                />
-                                
-                            </td> --}}
                             <td class="px-4 py-2 text-gray-900 dark:text-gray-100">
                                 <select 
                                     class=" border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500" 
@@ -83,12 +72,10 @@
                                 {{ $item['text_order_ids'] }}
                             </td>
                             <td class="px-4 py-2 text-gray-900 dark:text-gray-100">
-                                <select 
-                                    class=" border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500" 
-                                    wire:model="items.{{ $index }}.factory_id">
-                                    {{-- <option value="{{ $factories['1'] }}">{{ $factory['name'] }}</option> --}}
+
+                                <select wire:model="items.{{ $index }}.factory_id">
                                     @foreach ($factories as $key => $factory)
-                                        <option value="{{ $key }}" @if($key == 1) selected @endif>{{ $factory }}</option>
+                                        <option value="{{ $key }}">{{ $factory }}</option>
                                     @endforeach
                                 </select>
                                 

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\Factory;
 use Filament\Pages\Page;
 use App\Models\Order;
 use App\Models\Product;
@@ -31,49 +32,9 @@ class CreateFactoryOrder extends Page
 
         $orders = Order::whereIn('id', $orderIds)->get();
 
-        $itemsGrouped = []; 
+        $this->items = $this->getItems($orders);
 
-        foreach ($orders as $order) {
-            foreach ($order->orderProducts as $op) {
-                $product = $op->product;
-                $sku     = $product->sku ?? null;
-
-                if (!$sku) {
-                    continue;
-                }
-
-                // инициализируем строку, если её ещё нет
-                if (!isset($itemsGrouped[$sku])) {
-                    $itemsGrouped[$sku] = [
-                        'product_sku'    => $sku,
-                        'product_name'   => $product->name ?? 'Неизвестно',
-                        'image'          => $product->image ?? null,
-                        'stock_quantity' => $product->stock_quantity ?? 0,
-                        'quantity'       => 0,
-                        'desired_stock_quantity' => $product->desired_stock_quantity ?? 0,
-                        'order_ids'      => [],
-                        'factory_id'       => 1
-                    ];
-                }
-
-                // накапливаем
-                $itemsGrouped[$sku]['quantity']     += $op->quantity;
-                $itemsGrouped[$sku]['order_ids'][]   = $order->order_number;
-            }
-        }
-
-        $this->items = collect($itemsGrouped)
-            ->map(function ($row) {
-                $row['text_order_ids'] = implode(',', $row['order_ids']);
-                unset($row['order_ids']);
-
-                $requiredQuantity = $row['desired_stock_quantity'] + $row['quantity'] - $row['stock_quantity'] > 0 ? $row['desired_stock_quantity'] + $row['quantity'] - $row['stock_quantity'] : 0;
-                $row['required_quantity'] = $requiredQuantity;
-
-                return $row;
-            })
-            ->values()
-            ->toArray();
+        $this->destributionItems();
 
         $this->factories = \App\Models\Factory::pluck('name', 'id')->toArray();
         $this->products = \App\Models\Product::pluck('sku')->toArray();
@@ -108,7 +69,6 @@ class CreateFactoryOrder extends Page
 
     public function save()
     {
-
         // 1. Группируем товары по фабрикам
         $groups = collect($this->items)->groupBy('factory_id');
   
@@ -186,6 +146,75 @@ class CreateFactoryOrder extends Page
         // Сброс ключей массива (чтобы избежать пропуска индексов)
         $this->items = array_values($this->items);
     }
+
+    public function getItems($orders)
+    {
+        $itemsGrouped = []; 
+
+        foreach ($orders as $order) {
+            foreach ($order->orderProducts as $op) {
+                $product = $op->product;
+                $sku     = $product->sku ?? null;
+
+                if (!$sku) {
+                    continue;
+                }
+
+                // инициализируем строку, если её ещё нет
+                if (!isset($itemsGrouped[$sku])) {
+                    $itemsGrouped[$sku] = [
+                        'product_sku'    => $sku,
+                        'product_name'   => $product->name ?? 'Неизвестно',
+                        'image'          => $product->image ?? null,
+                        'stock_quantity' => $product->stock_quantity ?? 0,
+                        'quantity'       => 0,
+                        'desired_stock_quantity' => $product->desired_stock_quantity ?? 0,
+                        'order_ids'      => [],
+                        'factory_id'       => 1
+                    ];
+                }
+
+                // накапливаем
+                $itemsGrouped[$sku]['quantity']     += $op->quantity;
+                $itemsGrouped[$sku]['order_ids'][]   = $order->order_number;
+            }
+        }
+
+        $items = collect($itemsGrouped)
+            ->map(function ($row) {
+                $row['text_order_ids'] = implode(',', $row['order_ids']);
+                unset($row['order_ids']);
+
+                $requiredQuantity = $row['desired_stock_quantity'] + $row['quantity'] - $row['stock_quantity'] > 0 ? $row['desired_stock_quantity'] + $row['quantity'] - $row['stock_quantity'] : 0;
+                $row['required_quantity'] = $requiredQuantity;
+
+                return $row;
+            })
+            ->values()
+            ->toArray();
+
+        return $items;
+    }
+
+    public function destributionItems()
+    {
+        foreach($this->items as &$item){
+            
+            $product = Product::where('sku', $item['product_sku'])->with(['factoryModelCount', 'factoryOrderItem'])->first();
+
+            $f1_model_count = $product->factoryModelCount?->factory1_model_count;
+            $manufactureDays = $f1_model_count ? $item['required_quantity'] / $f1_model_count : 0;
+            
+            if($manufactureDays <= 7) {
+                $item['factory_id'] = 1;
+            } else {
+                $item['factory_id'] = 2;
+            }
+        }
+
+    }
+
+   
 
 
 }

@@ -14,6 +14,8 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Group;
+use Filament\Forms\Components\Section;
 use Illuminate\Support\Facades\Http;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\ToggleColumn;
@@ -36,35 +38,46 @@ class ProductResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->label('Назва')
-                    ->maxLength(191),
-                Forms\Components\TextInput::make('sku')
-                    ->label('SKU')
-                    ->unique(ignoreRecord: true)
-                    ->required()
-                    ->maxLength(191),
-                Forms\Components\TextInput::make('image')
-                    ->label('Посилання на фото')
-                    ->maxLength(191),
-                Forms\Components\TextInput::make('stock_quantity')
-                    ->label('Кіль-сть')
-                    ->numeric()
-                     ->minLength(0)
-                    ->default(0),
-                Forms\Components\TextInput::make('desired_stock_quantity')
-                    ->label('Бажана кіль-сть')
-                    ->numeric()
-                    ->default(0)
-                    ->minLength(0),
-                Forms\Components\TextInput::make('product_id_oc')
-                    ->label('ID товару на OC')
-                    ->numeric(),
-                Forms\Components\TextInput::make('product_id_hor')
-                    ->label('ID товару на Hor')
-                    ->numeric(),
-                Toggle::make('is_active')
-                        ->label('Вкл/Викл'),
+                Group::make()
+                    ->schema([
+                        Section::make()
+                            ->schema([
+                                Forms\Components\TextInput::make('sku')
+                                    ->label('SKU')
+                                    ->unique(ignoreRecord: true)
+                                    ->required()
+                                    ->maxLength(191),
+                                Forms\Components\TextInput::make('name')
+                                    ->label('Назва')
+                                    ->maxLength(191),
+                            ])->columns(2),
+
+                    ]),
+                Group::make()
+                    ->schema([
+                        Section::make()
+                            ->schema([
+                                Forms\Components\TextInput::make('image')
+                                    ->label('Посилання на фото')
+                                    ->maxLength(191)
+                                    ->columnSpan(3),
+                                Forms\Components\TextInput::make('stock_quantity')
+                                    ->label('Кіль-сть на складі')                                    
+                                    ->numeric()
+                                    ->minLength(0)
+                                    ->default(0),
+                                Forms\Components\TextInput::make('desired_stock_quantity')
+                                    ->label('Бажана кіль-сть')
+                                    ->numeric()
+                                    ->default(0)
+                                    ->minLength(0),
+                                Toggle::make('is_active')
+                                    ->label('Активний товар (Вкл/Викл)')
+                                    ->columnSpan(2),
+                            ])->columns(3),
+
+                    ]),
+                
             ]);
     }
 

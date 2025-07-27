@@ -63,10 +63,14 @@ class FactoryModelCountResource extends Resource
                 Tables\Columns\TextColumn::make('product.sku')
                     ->label('Арт.')
                     ->sortable(),
+                Tables\Columns\ImageColumn::make('product.image')
+                    ->label('Фото.'),
                 Tables\Columns\TextColumn::make('factory1_model_count')
+                    ->label('Пр. №1')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('factory2_model_count')
+                    ->label('Пр. №2')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
