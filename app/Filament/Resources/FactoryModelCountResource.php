@@ -18,7 +18,7 @@ class FactoryModelCountResource extends Resource
 {
     protected static ?string $model = FactoryModelCount::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-gift-top';
     protected static ?string $navigationLabel = 'Кіл-ть форм';
     protected static ?string $modelLabel = 'Кількість форм на виробництві';
     protected static ?string $pluralModelLabel = 'Кількість форм на виробництві';

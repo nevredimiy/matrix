@@ -9,6 +9,7 @@ use App\Models\Product;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\DB;
 use App\Models\FactoryOrder;
+use App\Models\Setting;
 
 class CreateFactoryOrder extends Page
 {
@@ -25,20 +26,37 @@ class CreateFactoryOrder extends Page
     public $factories = [];
     public $products = [];
 
+    public $orders = null;
+
+    public $itemsByOrderId = [];
 
     public function mount()
     {
         $orderIds = session('selected_order_ids', []);
 
-        $orders = Order::whereIn('id', $orderIds)->get();
+        $this->orders = Order::whereIn('id', $orderIds)
+            ->with(['orderProducts.product'])
+            ->get();
 
-        $this->items = $this->getItems($orders);
+        foreach ($this->orders as $order) {
+            foreach ($order->orderProducts as $op) {
+                $this->itemsByOrderId[$order->id][] = [
+                    'product_id' => $op->product->id,
+                    'product' => $op->product,
+                    'factory_id' => null,
+                    'quantity' => $op->quantity,
+                    'required_quantity' => $op->product->desired_stock_quantity + $op->quantity - $op->product->stock_quantity < 0 ? 0 : $op->product->desired_stock_quantity + $op->quantity - $op->product->stock_quantity,
+                ];
+            }
+        }
 
-        $this->destributionItems();
+        // dump($this->orders);
+        // dd($this->itemsByOrderId);
 
-        $this->factories = \App\Models\Factory::pluck('name', 'id')->toArray();
-        $this->products = \App\Models\Product::pluck('sku')->toArray();
+        $this->factories = Factory::pluck('name', 'id')->toArray();
     }
+
+
     
     //  Это нужно для нового товара, что бы подятгивались данные
     public function updatedItems($value, $name)
@@ -126,26 +144,25 @@ class CreateFactoryOrder extends Page
         return redirect()->route('filament.admin.resources.factory-order-items.index');
     }
 
-    public function addEmptyItem()
+    public function addEmptyItem($orderId)
     {
-        $this->items[] = [
-            'text_order_ids' => null,
-            'product_sku' => '',
-            'product_name' => '',
-            'image' => null,
-            'stock_quantity' => 0,
-            'quantity' => 1,
-            'factory_id' => 1
+        $this->itemsByOrderId[$orderId][] = [
+            'product_id' => null,
+            'product' => null,
+            'factory_id' => null,
+            'required_quantity' => 1,
         ];
     }
 
-    public function removeItem($index)
-    {
-        unset($this->items[$index]);
 
-        // Сброс ключей массива (чтобы избежать пропуска индексов)
-        $this->items = array_values($this->items);
+
+    public function removeItem($orderId, $index)
+    {
+        unset($this->itemsByOrderId[$orderId][$index]);
+        $this->itemsByOrderId[$orderId] = array_values($this->itemsByOrderId[$orderId]); // пересобрать индексы
     }
+
+
 
     public function getItems($orders)
     {
@@ -198,20 +215,20 @@ class CreateFactoryOrder extends Page
 
     public function destributionItems()
     {
-        foreach($this->items as &$item){
-            
+        $maxDays = (int) Setting::get('max_days_per_form', 7); // по умолчанию 7, если не задано
+
+        foreach ($this->items as &$item) {
             $product = Product::where('sku', $item['product_sku'])->with(['factoryModelCount', 'factoryOrderItem'])->first();
 
             $f1_model_count = $product->factoryModelCount?->factory1_model_count;
             $manufactureDays = $f1_model_count ? $item['required_quantity'] / $f1_model_count : 0;
-            
-            if($manufactureDays <= 7) {
+
+            if ($manufactureDays <= $maxDays) {
                 $item['factory_id'] = 1;
             } else {
                 $item['factory_id'] = 2;
             }
         }
-
     }
 
     public static function shouldRegisterNavigation(): bool

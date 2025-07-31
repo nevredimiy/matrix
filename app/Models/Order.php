@@ -23,7 +23,9 @@ class Order extends Model
 
     public function products()
     {
-        return $this->hasMany(OrderProduct::class);
+        return $this->orderProducts()
+                    ->join('products', 'order_products.product_id', '=', 'products.id')
+                    ->select('products.*', 'order_products.quantity as order_quantity');
     }
 
     public function pivotProducts()
