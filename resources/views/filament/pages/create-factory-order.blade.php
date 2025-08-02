@@ -66,7 +66,7 @@
                                 <input
                                     type="number"
                                     wire:model.defer="itemsByOrderId.{{ $order->id }}.{{ $index }}.required_quantity"
-                                    min="1"
+                                    min="0"
                                     class="w-20 border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md"
                                 />
                             </td>
@@ -117,15 +117,5 @@
 
         
       
-        <div class="mt-2">
-            <button
-                type="button"
-                wire:click="addEmptyItem"
-                class="mb-4 px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700"
-            >
-                   Добавить товар
-            </button>
-        </div>
-       
     </form>
 </x-filament::page>

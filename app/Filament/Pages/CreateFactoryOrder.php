@@ -46,17 +46,18 @@ class CreateFactoryOrder extends Page
                     'factory_id' => null,
                     'quantity' => $op->quantity,
                     'required_quantity' => $op->product->desired_stock_quantity + $op->quantity - $op->product->stock_quantity < 0 ? 0 : $op->product->desired_stock_quantity + $op->quantity - $op->product->stock_quantity,
+                    // 'factory_id' => $this->destributionItems();
                 ];
             }
         }
+
+        $this->destributionItems();
 
         // dump($this->orders);
         // dd($this->itemsByOrderId);
 
         $this->factories = Factory::pluck('name', 'id')->toArray();
     }
-
-
     
     //  Это нужно для нового товара, что бы подятгивались данные
     public function updatedItems($value, $name)
@@ -87,6 +88,8 @@ class CreateFactoryOrder extends Page
 
     public function save()
     {
+
+        dd($this->items);
         // 1. Группируем товары по фабрикам
         $groups = collect($this->items)->groupBy('factory_id');
   
@@ -217,11 +220,14 @@ class CreateFactoryOrder extends Page
     {
         $maxDays = (int) Setting::get('max_days_per_form', 7); // по умолчанию 7, если не задано
 
-        foreach ($this->items as &$item) {
-            $product = Product::where('sku', $item['product_sku'])->with(['factoryModelCount', 'factoryOrderItem'])->first();
+        dd($this->itemsByOrderId);
 
-            $f1_model_count = $product->factoryModelCount?->factory1_model_count;
-            $manufactureDays = $f1_model_count ? $item['required_quantity'] / $f1_model_count : 0;
+        foreach ($this->itemsByOrderId as $order) {
+            foreach($order['products'] as $product)
+                $product = Product::where('sku', $item['product_sku'])->with(['factoryModelCount', 'factoryOrderItem'])->first();
+
+                $f1_model_count = $product->factoryModelCount?->factory1_model_count;
+                $manufactureDays = $f1_model_count ? $item['required_quantity'] / $f1_model_count : 0;
 
             if ($manufactureDays <= $maxDays) {
                 $item['factory_id'] = 1;
