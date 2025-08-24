@@ -19,11 +19,11 @@ class FactoryOrderDeliveryResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-truck';
 
-    protected static ?string $navigationLabel = 'Відвантаження з виробництва';
+    protected static ?string $navigationLabel = 'Відвантаження';
 
     protected static ?string $navigationGroup = 'Виробництво';
 
-    protected static ?int $navigationSort = 20;
+    protected static ?int $navigationSort = 21;
 
     public static function form(Form $form): Form
     {
@@ -198,11 +198,11 @@ class FactoryOrderDeliveryResource extends Resource
                     ->openUrlInNewTab()
                     ->visible(fn ($record) => $record->warehouseReceipts->isNotEmpty()),
 
-                Tables\Actions\EditAction::make()
-                    ->label('Редагувати'),
-                Tables\Actions\DeleteAction::make()
-                    ->label('Видалити')
-                    ->requiresConfirmation(),
+                // Tables\Actions\EditAction::make()
+                //     ->label('Редагувати'),
+                // Tables\Actions\DeleteAction::make()
+                //     ->label('Видалити')
+                //     ->requiresConfirmation(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

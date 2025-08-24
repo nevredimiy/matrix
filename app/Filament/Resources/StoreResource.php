@@ -22,7 +22,7 @@ class StoreResource extends Resource
     protected static ?string $navigationLabel = 'Магазини';
 
     protected static ?string $navigationGroup = 'Налаштування';
-    protected static ?int $navigationSort = 20;
+    protected static ?int $navigationSort = 50;
 
     public static function form(Form $form): Form
     {

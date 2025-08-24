@@ -20,7 +20,7 @@ class FactoryResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-home-modern';
         protected static ?string $navigationLabel = 'Производства';
     protected static ?string $navigationGroup = 'Налаштування';
-    protected static ?int $navigationSort = 60;
+    protected static ?int $navigationSort = 50;
 
     public static function form(Form $form): Form
     {

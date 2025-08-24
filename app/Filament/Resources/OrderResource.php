@@ -35,7 +35,7 @@ class OrderResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Замовлення';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 21;
 
     public static function form(Form $form): Form
     {

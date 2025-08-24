@@ -32,7 +32,7 @@ class ProductResource extends Resource
 
     protected static ?string $navigationGroup = 'Налаштування';
     protected static ?string $pluralModelLabel = 'Товари';
-    protected static ?int $navigationSort = 30;
+    protected static ?int $navigationSort = 50;
 
     public static function form(Form $form): Form
     {

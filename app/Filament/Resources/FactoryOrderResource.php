@@ -23,9 +23,9 @@ class FactoryOrderResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $navigationLabel = 'Список замовлень';
+    protected static ?string $navigationLabel = 'Замовлення';
 
-    protected static ?int $navigationSort = 99;
+    protected static ?int $navigationSort = 20;
 
     protected static ?string $navigationGroup = 'Виробництво';
 

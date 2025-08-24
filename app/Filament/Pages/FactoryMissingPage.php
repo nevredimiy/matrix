@@ -22,6 +22,8 @@ class FactoryMissingPage extends Page implements HasTable
 
     protected static bool $shouldRegisterNavigation = false;
 
+    protected static ?int $navigationSort = 99;
+
     public ?int $factory_id = null;
 
     public function mount(?int $factory_id = null): void
@@ -81,7 +83,7 @@ class FactoryMissingPage extends Page implements HasTable
              ->headerActions([
                 Action::make('factory_order_delivery')
                     ->label('Отгрузка')
-                    ->url(route('filament.admin.resources.factory-product-deliveries.create', ['factory_id' => $this->factory_id]))
+                    // ->url(route('filament.admin.resources.factory-product-deliveries.create', ['factory_id' => $this->factory_id]))
             ]);
     }
 

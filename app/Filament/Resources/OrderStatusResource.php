@@ -26,7 +26,7 @@ class OrderStatusResource extends Resource
     protected static ?string $navigationLabel = 'Статуси замовлення';
 
     protected static ?string $navigationGroup = 'Налаштування';
-    protected static ?int $navigationSort = 40;
+    protected static ?int $navigationSort = 50;
 
     public static function form(Form $form): Form
     {

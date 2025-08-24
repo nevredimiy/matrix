@@ -26,6 +26,9 @@ class FactoryModelCountResource extends Resource
     protected static bool $hasTitleCaseModelLabel = false;
 
 
+    protected static ?int $navigationSort = 50;
+
+
     public static function form(Form $form): Form
     {
         return $form

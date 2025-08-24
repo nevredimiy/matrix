@@ -79,7 +79,7 @@ class AdminPanelProvider extends PanelProvider
                 NavigationItem::make('Заказы - Пр. №1')
                     ->url(fn () => FactoryMissingPage::getUrl(['factory_id' => 1]))
                     ->icon('heroicon-o-truck')
-                    ->sort(10)
+                    ->sort(99)
                     ->group('Производство')
                     ->badge(function () {
                         return FactoryOrderItem::query()
@@ -93,7 +93,7 @@ class AdminPanelProvider extends PanelProvider
                 NavigationItem::make('Заказы - Пр. №2')
                     ->url(fn () => FactoryMissingPage::getUrl(['factory_id' => 2]))
                     ->icon('heroicon-o-truck')
-                    ->sort(11)
+                    ->sort(99)
                     ->group('Производство')
                     ->badge(function () {
                         return FactoryOrderItem::query()

@@ -24,7 +24,7 @@ class SettingResource extends Resource
     protected static ?string $pluralModelLabel = 'Налаштування';
     protected static ?string $navigationGroup = 'Налаштування';
     protected static bool $hasTitleCaseModelLabel = false;
-     protected static ?int $navigationSort = 99;
+    protected static ?int $navigationSort = 50;
 
     public static function form(Form $form): Form
     {
