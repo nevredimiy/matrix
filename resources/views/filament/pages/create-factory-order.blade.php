@@ -35,7 +35,7 @@
                     @foreach ($itemsByOrderId[$order->id] ?? [] as $index => $item)
                         <tr>
                             <td class="px-4 py-2">
-                                @if(isset($item['product']->image))
+                                @if(isset($item['product']) && isset($item['product']->image))
                                     <img src="{{ $item['product']->image }}" class="h-10 w-10 rounded-md object-cover" />
                                 @else
                                     <span class="text-gray-400">Нет фото</span>
@@ -47,7 +47,18 @@
                             </td>
 
                             <td class="px-4 py-2">
-                                {{ $item['product']->sku ?? '—' }}
+                                {{-- {{ $item['product']->sku ?? '—' }} --}}
+
+                                <select
+                                    class=" border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                                    wire:model.live="itemsByOrderId.{{ $order->id }}.{{ $index }}.product_sku">
+                                    <option value="{{ $item['product']->sku ?? '' }}">{{ $item['product']->sku ?? 'Выберите товар' }}</option>
+                                    @foreach ($products as $product)
+                                        <option value="{{ $product }}">{{ $product }}</option>
+                                    @endforeach
+                                </select>
+
+
                             </td>
 
                             <td class="px-4 py-2">
@@ -59,7 +70,11 @@
                             </td>
 
                             <td class="px-4 py-2">
-                                {{ $item['product']->desired_stock_quantity ?? '—' }}
+                                @if(isset($item['product']) && isset($item['product']->desired_stock_quantity))
+                                    {{ $item['product']->desired_stock_quantity }}
+                                @else
+                                    —
+                                @endif
                             </td>
 
                             <td class="px-4 py-2">

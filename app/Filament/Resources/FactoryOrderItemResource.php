@@ -34,9 +34,11 @@ class FactoryOrderItemResource extends Resource
                     ->numeric(),
                 Forms\Components\TextInput::make('quantity_ordered')
                     ->required()
+                    ->label('Кількість замовлення')
                     ->numeric(),
                 Forms\Components\TextInput::make('quantity_delivered')
                     ->required()
+                    ->label('Кількість відвантаження')
                     ->numeric()
                     ->default(0),
             ]);
@@ -47,9 +49,9 @@ class FactoryOrderItemResource extends Resource
         return $table
             ->defaultSort('id', 'desc')
             ->columns([
-                TextColumn::make('factory_order_id')
+                TextColumn::make('factoryOrder.order_number')
                     ->numeric()
-                    ->label('№')
+                    ->label('№ замовлення')
                     ->sortable(),
                 TextColumn::make('product.sku')
                     ->label('Арт.')
@@ -69,9 +71,10 @@ class FactoryOrderItemResource extends Resource
                     ->label('Куди')
                     ->sortable(),
                 TextColumn::make('created_at')
+                    ->label('Дата створення')
                     ->dateTime()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()

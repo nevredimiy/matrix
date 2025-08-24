@@ -38,7 +38,7 @@ class ProductsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->recordTitleAttribute('product_id')
+            // ->recordTitleAttribute('product_id')
             ->columns([
                 TextColumn::make('product.name')->label('Товар')->searchable(),
                 TextColumn::make('product.sku')->label('SKU')->searchable(),

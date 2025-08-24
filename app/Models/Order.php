@@ -23,9 +23,9 @@ class Order extends Model
 
     public function products()
     {
-        return $this->orderProducts()
-                    ->join('products', 'order_products.product_id', '=', 'products.id')
-                    ->select('products.*', 'order_products.quantity as order_quantity');
+        return $this->orderProducts();
+                    // ->join('products', 'order_products.product_id', '=', 'products.id')
+                    // ->select('products.*', 'order_products.quantity as order_quantity');
     }
 
     public function pivotProducts()
@@ -51,6 +51,11 @@ class Order extends Model
     {
         return $this->hasOne(OrderStatus::class, 'identifier', 'order_status_identifier');
             // ->whereColumn('order_statuses.store_id', 'orders.store_id');
+    }
+
+    public function factoryOrders()
+    {
+        return $this->hasMany(FactoryOrder::class);
     }
 
 

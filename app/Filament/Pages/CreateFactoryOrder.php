@@ -43,6 +43,7 @@ class CreateFactoryOrder extends Page
                 $this->itemsByOrderId[$order->id][] = [
                     'product_id' => $op->product->id,
                     'product' => $op->product,
+                    'product_sku' => $op->product->sku,
                     'factory_id' => null,
                     'quantity' => $op->quantity,
                     'required_quantity' => $op->product->desired_stock_quantity + $op->quantity - $op->product->stock_quantity < 0 ? 0 : $op->product->desired_stock_quantity + $op->quantity - $op->product->stock_quantity,
@@ -57,6 +58,7 @@ class CreateFactoryOrder extends Page
         // dd($this->itemsByOrderId);
 
         $this->factories = Factory::pluck('name', 'id')->toArray();
+        $this->products = \App\Models\Product::pluck('sku')->toArray();
     }
     
     //  Это нужно для нового товара, что бы подятгивались данные
@@ -86,45 +88,84 @@ class CreateFactoryOrder extends Page
         }
     }
 
+    // Обработчик для обновления данных товара в itemsByOrderId
+    public function updatedItemsByOrderId($value, $name)
+    {
+        // $name приходит как "order_id.index.product_sku"
+        if (str_ends_with($name, 'product_sku')) {
+            $parts = explode('.', $name);
+            if (count($parts) === 3) {
+                $orderId = $parts[0];
+                $index = $parts[1];
+                $sku = $value;
+
+                // Ищем товар по артикулу
+                $product = \App\Models\Product::where('sku', $sku)->first();
+
+                if ($product) {
+                    // Обновляем данные товара в массиве
+                    $this->itemsByOrderId[$orderId][$index]['product'] = $product;
+                    $this->itemsByOrderId[$orderId][$index]['product_id'] = $product->id;
+                } else {
+                    // Если товар не найден — очищаем поля
+                    $this->itemsByOrderId[$orderId][$index]['product'] = null;
+                    $this->itemsByOrderId[$orderId][$index]['product_id'] = null;
+                }
+            }
+        }
+    }
+
     public function save()
     {
-
-        dd($this->items);
-        // 1. Группируем товары по фабрикам
-        $groups = collect($this->items)->groupBy('factory_id');
-  
         try {
-            // 2. Гарантируем целостность данных
-            DB::transaction(function () use ($groups) {
-                $allOrdersText = '';
-                foreach ($groups as $factoryId => $items) {
+            // 1. Гарантируем целостность данных
+            DB::transaction(function () {
+                $processedOrderIds = [];
 
-                    /** @var FactoryOrder $factoryOrder */
-                    $factoryOrder = FactoryOrder::create([
-                        'factory_id' => $factoryId,
-                        'status'     => 'в процессе',
-                    ]);
+                // 2. Для каждого исходного заказа создаем заказ на производство
+                foreach ($this->orders as $order) {
+                    // 3. Группируем товары по фабрикам для текущего заказа
+                    // Фильтруем только товары с product_id, factory_id и required_quantity > 0
+                    $factoryGroups = collect($this->itemsByOrderId[$order->id] ?? [])
+                        ->filter(function ($item) {
+                            return $item['product_id'] &&
+                                   $item['factory_id'] &&
+                                   ($item['required_quantity'] ?? 0) > 0;
+                        })
+                        ->groupBy('factory_id');
 
-                    // 3. Заполняем строки заказа
-                    foreach ($items as $item) {
+                    // 4. Пропускаем заказ, если нет товаров для производства
+                    if ($factoryGroups->isEmpty()) {
+                        continue;
+                    }
 
-                        $allOrdersText .= $item['text_order_ids'];
-                        // вытаскиваем id товара по SKU (value() быстрее first()->id)
-                        $productId = Product::where('sku', $item['product_sku'])->value('id');
+                    // 5. Для каждой фабрики создаем отдельный заказ на производство
+                    foreach ($factoryGroups as $factoryId => $items) {
+                        /** @var FactoryOrder $factoryOrder */
+                        $factoryOrder = FactoryOrder::create([
+                            'factory_id' => $factoryId,
+                            'order_id' => $order->id,
+                            'order_number' => $order->order_number,
+                            'status' => 'в процессе',
+                        ]);
 
-                        if ($productId) {
+                        // 6. Заполняем строки заказа товарами для этой фабрики
+                        foreach ($items as $item) {
                             $factoryOrder->items()->create([
-                                'product_id'        => $productId,
-                                'quantity_ordered'  => $item['required_quantity'],
-                                // если есть, можете сразу добавить required_quantity, quantity_delivered и т.д.
+                                'product_id' => $item['product_id'],
+                                'quantity_ordered' => $item['required_quantity'],
                             ]);
                         }
                     }
+
+                    // 7. Отмечаем заказ как обработанный только если были созданы заказы на производство
+                    $processedOrderIds[] = $order->id;
                 }
 
-                $allOrders = array_filter(array_map('trim', explode(',', $allOrdersText)));
-
-                Order::whereIn('order_number', $allOrders)->update(['status' => 'in_progress']);
+                // 8. Обновляем статусы заказов
+                if (!empty($processedOrderIds)) {
+                    Order::whereIn('id', $processedOrderIds)->update(['status' => 'in_progress']);
+                }
             });
 
             Notification::make()
@@ -134,14 +175,13 @@ class CreateFactoryOrder extends Page
                 ->send();
 
         } catch (\Throwable $e) {
-
             Notification::make()
                 ->title('Ошибка')
-                ->body('Не удалось создать заказы: '.$e->getMessage())
+                ->body('Не удалось создать заказы: ' . $e->getMessage())
                 ->danger()
                 ->send();
 
-                return back();   // оставляем пользователя на форме
+            return back(); // оставляем пользователя на форме
         }
 
         return redirect()->route('filament.admin.resources.factory-order-items.index');
@@ -152,8 +192,10 @@ class CreateFactoryOrder extends Page
         $this->itemsByOrderId[$orderId][] = [
             'product_id' => null,
             'product' => null,
+            'product_sku' => '',
             'factory_id' => null,
             'required_quantity' => 1,
+            'quantity' => 0,
         ];
     }
 
@@ -220,19 +262,26 @@ class CreateFactoryOrder extends Page
     {
         $maxDays = (int) Setting::get('max_days_per_form', 7); // по умолчанию 7, если не задано
 
-        dd($this->itemsByOrderId);
+        // dd($this->itemsByOrderId);
 
-        foreach ($this->itemsByOrderId as $order) {
-            foreach($order['products'] as $product)
-                $product = Product::where('sku', $item['product_sku'])->with(['factoryModelCount', 'factoryOrderItem'])->first();
+        foreach ($this->itemsByOrderId as $orderId => $order) {
+            foreach($order as $index => $productData) {
+                $product = $productData['product'];
 
-                $f1_model_count = $product->factoryModelCount?->factory1_model_count;
-                $manufactureDays = $f1_model_count ? $item['required_quantity'] / $f1_model_count : 0;
+                // Проверяем, что товар существует
+                if ($product) {
+                    $f1_model_count = $product->factoryModelCount?->factory1_model_count;
+                    $manufactureDays = $f1_model_count ? $productData['required_quantity'] / $f1_model_count : 0;
 
-            if ($manufactureDays <= $maxDays) {
-                $item['factory_id'] = 1;
-            } else {
-                $item['factory_id'] = 2;
+                    if ($manufactureDays <= $maxDays) {
+                        $this->itemsByOrderId[$orderId][$index]['factory_id'] = 1;
+                    } else {
+                        $this->itemsByOrderId[$orderId][$index]['factory_id'] = 2;
+                    }
+                } else {
+                    // Если товара нет, устанавливаем фабрику по умолчанию
+                    $this->itemsByOrderId[$orderId][$index]['factory_id'] = 1;
+                }
             }
         }
     }

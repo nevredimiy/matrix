@@ -50,7 +50,7 @@ class FactoryOrderResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('id')
+                Tables\Columns\TextColumn::make('order_number')
                     ->label('№ замовлення')
                     ->numeric()
                     ->sortable(),

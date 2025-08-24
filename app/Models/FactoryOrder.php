@@ -9,12 +9,19 @@ class FactoryOrder extends Model
 {
     protected $fillable = [
         'factory_id',
+        'order_id',
+        'order_number',
         'status'
     ];
 
     public function factory()
     {
         return $this->belongsTo(Factory::class);
+    }
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
     }
 
     public function items()
