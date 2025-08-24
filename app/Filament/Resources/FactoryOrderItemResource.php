@@ -33,12 +33,13 @@ class FactoryOrderItemResource extends Resource
                     ->required()
                     ->numeric(),
                 Forms\Components\TextInput::make('quantity_ordered')
+                    ->label('Кількість замовлено')
+                    ->helperText('Кількість одиниць, які потрібно виготовити')
                     ->required()
-                    ->label('Кількість замовлення')
                     ->numeric(),
                 Forms\Components\TextInput::make('quantity_delivered')
-                    ->required()
-                    ->label('Кількість відвантаження')
+                    ->label('Кількість відвантажено')
+                    ->helperText('Кількість одиниць, які вже відвантажено з виробництва')
                     ->numeric()
                     ->default(0),
             ]);
@@ -58,13 +59,13 @@ class FactoryOrderItemResource extends Resource
                     ->tooltip(fn ($record) => $record->product->name ?? null)
                     ->sortable(),
                 TextColumn::make('quantity_ordered')
-                    ->label('Кіл-ть')
-                    ->tooltip('Кількість штук, які замовлені в магазині')
+                    ->label('Кількість замовлено')
+                    ->tooltip('Кількість одиниць, які потрібно виготовити')
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('quantity_delivered')
-                    ->label('Від-но')
-                    ->tooltip('Відвантажено з виробництва, шт.')
+                    ->label('Кількість відвантажено')
+                    ->tooltip('Кількість одиниць, які вже відвантажено з виробництва')
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('factoryOrder.factory.name')

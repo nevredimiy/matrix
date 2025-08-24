@@ -65,7 +65,7 @@ class FactoryMissingPage extends Page implements HasTable
                     ->sortable()
                     ->numeric(),
                  TextColumn::make('product.name')
-                    ->label('Назва')
+                    ->label('Назва')        
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('created_at')

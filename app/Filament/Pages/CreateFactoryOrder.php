@@ -30,6 +30,11 @@ class CreateFactoryOrder extends Page
 
     public $itemsByOrderId = [];
 
+    // Свойства для управления диалогом подтверждения
+    public $showOverwriteDialog = false;
+    public $conflictingOrders = [];
+    public $pendingSave = false;
+
     public function mount()
     {
         $orderIds = session('selected_order_ids', []);
@@ -91,12 +96,14 @@ class CreateFactoryOrder extends Page
     // Обработчик для обновления данных товара в itemsByOrderId
     public function updatedItemsByOrderId($value, $name)
     {
-        // $name приходит как "order_id.index.product_sku"
-        if (str_ends_with($name, 'product_sku')) {
-            $parts = explode('.', $name);
-            if (count($parts) === 3) {
-                $orderId = $parts[0];
-                $index = $parts[1];
+        // $name приходит как "order_id.index.product_sku" или "order_id.index.required_quantity" или "order_id.index.factory_id"
+        $parts = explode('.', $name);
+        if (count($parts) === 3) {
+            $orderId = $parts[0];
+            $index = $parts[1];
+            $field = $parts[2];
+
+            if ($field === 'product_sku') {
                 $sku = $value;
 
                 // Ищем товар по артикулу
@@ -106,16 +113,77 @@ class CreateFactoryOrder extends Page
                     // Обновляем данные товара в массиве
                     $this->itemsByOrderId[$orderId][$index]['product'] = $product;
                     $this->itemsByOrderId[$orderId][$index]['product_id'] = $product->id;
+                    $this->itemsByOrderId[$orderId][$index]['product_sku'] = $sku;
+
+                    // Убеждаемся, что required_quantity установлено по умолчанию для новых товаров
+                    if (!isset($this->itemsByOrderId[$orderId][$index]['required_quantity']) ||
+                        $this->itemsByOrderId[$orderId][$index]['required_quantity'] <= 0) {
+                        $this->itemsByOrderId[$orderId][$index]['required_quantity'] = 1;
+                    }
                 } else {
                     // Если товар не найден — очищаем поля
                     $this->itemsByOrderId[$orderId][$index]['product'] = null;
                     $this->itemsByOrderId[$orderId][$index]['product_id'] = null;
+                    $this->itemsByOrderId[$orderId][$index]['product_sku'] = '';
                 }
+            } elseif ($field === 'required_quantity') {
+                // Убеждаемся, что required_quantity не может быть меньше 0
+                $this->itemsByOrderId[$orderId][$index]['required_quantity'] = max(0, (int)$value);
+            } elseif ($field === 'factory_id') {
+                // Сохраняем выбранную фабрику
+                $this->itemsByOrderId[$orderId][$index]['factory_id'] = $value;
             }
         }
     }
 
     public function save()
+    {
+        // Проверяем конфликтующие заказы
+        $this->checkConflictingOrders();
+
+        if (!empty($this->conflictingOrders)) {
+            // Показываем диалог подтверждения
+            $this->showOverwriteDialog = true;
+            $this->pendingSave = true;
+            return;
+        }
+
+        // Если нет конфликтов, выполняем сохранение
+        $this->performSave();
+    }
+
+    public function checkConflictingOrders()
+    {
+        $this->conflictingOrders = [];
+
+        foreach ($this->orders as $order) {
+            // Проверяем, есть ли уже заказы на производство с таким номером
+            $existingOrders = FactoryOrder::where('order_number', $order->order_number)->get();
+
+            if ($existingOrders->isNotEmpty()) {
+                $this->conflictingOrders[] = [
+                    'order_number' => $order->order_number,
+                    'existing_count' => $existingOrders->count(),
+                    'factories' => $existingOrders->pluck('factory.name')->join(', ')
+                ];
+            }
+        }
+    }
+
+    public function confirmOverwrite()
+    {
+        $this->showOverwriteDialog = false;
+        $this->performSave();
+    }
+
+    public function cancelOverwrite()
+    {
+        $this->showOverwriteDialog = false;
+        $this->pendingSave = false;
+        $this->conflictingOrders = [];
+    }
+
+    public function performSave()
     {
         try {
             // 1. Гарантируем целостность данных
@@ -139,7 +207,10 @@ class CreateFactoryOrder extends Page
                         continue;
                     }
 
-                    // 5. Для каждой фабрики создаем отдельный заказ на производство
+                    // 5. Удаляем существующие заказы на производство для этого номера заказа
+                    FactoryOrder::where('order_number', $order->order_number)->delete();
+
+                    // 6. Для каждой фабрики создаем отдельный заказ на производство
                     foreach ($factoryGroups as $factoryId => $items) {
                         /** @var FactoryOrder $factoryOrder */
                         $factoryOrder = FactoryOrder::create([
@@ -149,7 +220,7 @@ class CreateFactoryOrder extends Page
                             'status' => 'в процессе',
                         ]);
 
-                        // 6. Заполняем строки заказа товарами для этой фабрики
+                        // 7. Заполняем строки заказа товарами для этой фабрики
                         foreach ($items as $item) {
                             $factoryOrder->items()->create([
                                 'product_id' => $item['product_id'],
@@ -158,21 +229,29 @@ class CreateFactoryOrder extends Page
                         }
                     }
 
-                    // 7. Отмечаем заказ как обработанный только если были созданы заказы на производство
+                    // 8. Отмечаем заказ как обработанный только если были созданы заказы на производство
                     $processedOrderIds[] = $order->id;
                 }
 
-                // 8. Обновляем статусы заказов
+                // 9. Обновляем статусы заказов
                 if (!empty($processedOrderIds)) {
                     Order::whereIn('id', $processedOrderIds)->update(['status' => 'in_progress']);
                 }
             });
 
+            $message = !empty($this->conflictingOrders)
+                ? 'Заказы на производство перезаписаны.'
+                : 'Заказы на производство созданы.';
+
             Notification::make()
                 ->title('Успех')
-                ->body('Заказы на производство созданы.')
+                ->body($message)
                 ->success()
                 ->send();
+
+            // Сбрасываем состояние
+            $this->conflictingOrders = [];
+            $this->pendingSave = false;
 
         } catch (\Throwable $e) {
             Notification::make()
@@ -184,7 +263,7 @@ class CreateFactoryOrder extends Page
             return back(); // оставляем пользователя на форме
         }
 
-        return redirect()->route('filament.admin.resources.factory-order-items.index');
+        return redirect()->route('filament.admin.resources.factory-orders.index');
     }
 
     public function addEmptyItem($orderId)
@@ -197,6 +276,9 @@ class CreateFactoryOrder extends Page
             'required_quantity' => 1,
             'quantity' => 0,
         ];
+
+        // Запускаем процесс перераспределения фабрик после добавления товара
+        $this->destributionItems();
     }
 
 

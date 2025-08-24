@@ -14,6 +14,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Actions\Action;
+use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
 
 class FactoryOrderResource extends Resource
@@ -26,7 +27,7 @@ class FactoryOrderResource extends Resource
 
     protected static ?int $navigationSort = 99;
 
-    protected static ?string $navigationGroup = 'temp';
+    protected static ?string $navigationGroup = 'Виробництво';
 
     // protected static bool $shouldRegisterNavigation = false;  // Скрываем из меню
 
@@ -57,8 +58,37 @@ class FactoryOrderResource extends Resource
                 Tables\Columns\TextColumn::make('factory.name')
                     ->label('Виробництво')
                     ->sortable(),
+
+                Tables\Columns\TextColumn::make('completion_percentage')
+                    ->label('Прогрес')
+                    ->getStateUsing(function ($record) {
+                        $totalOrdered = $record->items->sum('quantity_ordered');
+                        $totalDelivered = $record->items->sum('quantity_delivered');
+
+                        if ($totalOrdered == 0) return '0%';
+
+                        $percentage = round(($totalDelivered / $totalOrdered) * 100);
+                        return $percentage . '%';
+                    })
+                    ->badge()
+                    ->color(function ($state) {
+                        $percentage = (int) str_replace('%', '', $state);
+                        if ($percentage == 100) return 'success';
+                        if ($percentage >= 50) return 'warning';
+                        return 'gray';
+                    })
+                    ->sortable(false),
+
                 Tables\Columns\TextColumn::make('status')
                     ->label('Статус замовлення')
+                    ->badge()
+                    ->color(function (string $state): string {
+                        return match ($state) {
+                            'в процессе' => 'warning',
+                            'Завершен' => 'success',
+                            default => 'gray',
+                        };
+                    })
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -70,13 +100,67 @@ class FactoryOrderResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('status')
+                    ->label('Статус замовлення')
+                    ->options([
+                        'в процессе' => 'В процесі',
+                        'Завершен' => 'Завершен',
+                    ])
+                    ->default()
+                    ->multiple(),
+
+                Tables\Filters\SelectFilter::make('factory_id')
+                    ->label('Виробництво')
+                    ->relationship('factory', 'name')
+                    ->searchable()
+                    ->preload(),
+
+                Tables\Filters\Filter::make('created_at')
+                    ->form([
+                        Forms\Components\DatePicker::make('created_from')
+                            ->label('З'),
+                        Forms\Components\DatePicker::make('created_until')
+                            ->label('По'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['created_from'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
+                            )
+                            ->when(
+                                $data['created_until'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
+                            );
+                    })
+                    ->label('Фільтр за датою створення'),
             ])
             ->actions([
-                // Action::make('edit')
-                //     ->url(fn (Post $record): string => route('posts.edit', $record))
-                //     ->openUrlInNewTab()
-                                
+                Tables\Actions\Action::make('complete_order')
+                    ->label('Завершити замовлення')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('Завершити замовлення?')
+                    ->modalDescription('Це позначить замовлення як завершене, незалежно від кількості відвантажених товарів.')
+                    ->modalSubmitActionLabel('Так, завершити')
+                    ->action(function ($record) {
+                        $record->update(['status' => 'Завершен']);
+
+                        Notification::make()
+                            ->title('Успіх')
+                            ->body("Замовлення №{$record->order_number} завершено")
+                            ->success()
+                            ->send();
+                    })
+                    ->visible(fn ($record) => $record->status !== 'Завершен'),
+
+                Tables\Actions\Action::make('view_items')
+                    ->label('Переглянути товари')
+                    ->icon('heroicon-o-eye')
+                    ->color('info')
+                    ->url(fn ($record) => "/admin/factory-orders/{$record->id}")
+                    ->openUrlInNewTab(),
             ])
             ->bulkActions([
                 // Tables\Actions\BulkActionGroup::make([

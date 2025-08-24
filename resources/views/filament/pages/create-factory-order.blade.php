@@ -80,7 +80,7 @@
                             <td class="px-4 py-2">
                                 <input
                                     type="number"
-                                    wire:model.defer="itemsByOrderId.{{ $order->id }}.{{ $index }}.required_quantity"
+                                    wire:model.live="itemsByOrderId.{{ $order->id }}.{{ $index }}.required_quantity"
                                     min="0"
                                     class="w-20 border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md"
                                 />
@@ -88,7 +88,7 @@
 
                             <td class="px-4 py-2">
                                 <select
-                                    wire:model.defer="itemsByOrderId.{{ $order->id }}.{{ $index }}.factory_id"
+                                    wire:model.live="itemsByOrderId.{{ $order->id }}.{{ $index }}.factory_id"
                                     class="border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md"
                                 >
                                     <option value="">—</option>
@@ -130,7 +130,79 @@
             </table>
         </div>
 
-        
-      
+
+        <!-- Диалоговое окно подтверждения перезаписи -->
+        @if($showOverwriteDialog)
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+             x-data="{ show: true }"
+             x-show="show"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0">
+
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md mx-4 shadow-2xl border border-gray-200 dark:border-gray-700"
+                 x-show="show"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95">
+
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                    </div>
+                    <h3 class="ml-3 text-lg font-semibold text-gray-900 dark:text-white">
+                        Подтверждение перезаписи
+                    </h3>
+                </div>
+
+                <div class="mb-4">
+                    <p class="text-sm text-gray-700 dark:text-gray-300 mb-3 font-medium">
+                        Найдены существующие заказы на производство, которые будут перезаписаны:
+                    </p>
+
+                    <div class="bg-gray-50 dark:bg-gray-700 rounded-md p-3 max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-600">
+                        @foreach($conflictingOrders as $conflict)
+                        <div class="text-sm text-gray-900 dark:text-gray-200 mb-2 p-2 bg-white dark:bg-gray-600 rounded border border-gray-100 dark:border-gray-500">
+                            <strong class="text-gray-900 dark:text-white">Заказ №{{ $conflict['order_number'] }}</strong>
+                            <br>
+                            <span class="text-gray-700 dark:text-gray-300">
+                                Существующие заказы: <span class="font-semibold">{{ $conflict['existing_count'] }}</span>
+                                @if($conflict['factories'])
+                                <br>Фабрики: <span class="font-medium">{{ $conflict['factories'] }}</span>
+                                @endif
+                            </span>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-2 border-t border-gray-200 dark:border-gray-600">
+                    <button
+                        type="button"
+                        wire:click="cancelOverwrite"
+                        class="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 font-medium transition-all duration-200 border border-gray-300 dark:border-gray-500">
+                        Отменить
+                    </button>
+
+                    <button
+                        type="button"
+                        wire:click="confirmOverwrite"
+                        class="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 font-medium transition-all duration-200 border border-gray-300 dark:border-gray-500">
+                        Перезаписать
+                    </button>
+                </div>
+            </div>
+        </div>
+        @endif
+
     </form>
 </x-filament::page>
