@@ -27,6 +27,7 @@ class TestTelegramNotification extends Command
     {
         parent::__construct();
         $this->telegramService = $telegramService;
+        dd($this->telegramService);
     }
 
     /**
