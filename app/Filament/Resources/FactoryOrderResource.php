@@ -7,6 +7,7 @@ use App\Filament\Resources\FactoryOrderResource\Pages;
 use App\Filament\Resources\FactoryOrderResource\RelationManagers;
 use App\Models\FactoryOrder;
 use Filament\Forms;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -40,10 +41,14 @@ class FactoryOrderResource extends Resource
                 Forms\Components\TextInput::make('factory_id')
                     ->required()
                     ->numeric(),
-                Forms\Components\TextInput::make('status')
+                Select::make('status')
+                    ->options([
+                        'в процессе' => 'в процессе',
+                        'Завершен' => 'Завершен'
+                    ])
                     ->required()
-                    ->maxLength(191)
-                    ->default('в процессе'),
+                    ->default('в процессе')
+                    ->label('Cтатус заказа'),
             ]);
     }
 
@@ -155,12 +160,12 @@ class FactoryOrderResource extends Resource
                     })
                     ->visible(fn ($record) => $record->status !== 'Завершен'),
 
-                Tables\Actions\Action::make('view_items')
-                    ->label('Переглянути товари')
-                    ->icon('heroicon-o-eye')
-                    ->color('info')
-                    ->url(fn ($record) => "/admin/factory-orders/{$record->id}")
-                    ->openUrlInNewTab(),
+                // Tables\Actions\Action::make('view_items')
+                //     ->label('Переглянути товари')
+                //     ->icon('heroicon-o-eye')
+                //     ->color('info')
+                //     ->url(fn ($record) => "/admin/factory-orders/{$record->id}")
+                //     ->openUrlInNewTab(),
             ])
             ->bulkActions([
                 // Tables\Actions\BulkActionGroup::make([
@@ -186,9 +191,8 @@ class FactoryOrderResource extends Resource
         ];
     }
 
-    public static function shouldRegisterNavigation(): bool
-    {
-        return Auth::user()?->hasRole('admin'); // только для админа
-     
-    }
+    // public static function shouldRegisterNavigation(): bool
+    // {
+    //     return Auth::user()?->hasRole('admin'); // только для админа     
+    // }
 }

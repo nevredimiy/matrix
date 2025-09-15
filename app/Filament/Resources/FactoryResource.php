@@ -79,4 +79,9 @@ class FactoryResource extends Resource
             'edit' => Pages\EditFactory::route('/{record}/edit'),
         ];
     }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->user()?->hasRole('admin'); // только для админа
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\OrderCreated;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -14,6 +15,10 @@ class Order extends Model
         'status',
         'order_status_identifier',
         'order_date',
+    ];
+
+    protected $dispatchesEvents = [
+        'created' => OrderCreated::class,
     ];
 
     public function store():BelongsTo

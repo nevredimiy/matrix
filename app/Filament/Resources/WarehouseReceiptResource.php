@@ -234,8 +234,8 @@ class WarehouseReceiptResource extends Resource
         ];
     }
 
-    public static function shouldRegisterNavigation(): bool
-    {
-        return auth()->user()?->hasRole('admin'); // только для админа
-    }
+    // public static function shouldRegisterNavigation(): bool
+    // {
+    //     return auth()->user()?->hasRole('admin'); // только для админа
+    // }
 }

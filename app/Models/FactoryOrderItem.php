@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\FactoryOrderItemCreated;
 use App\Models\FactoryOrder;
 use Illuminate\Database\Eloquent\Model;
 
@@ -12,6 +13,10 @@ class FactoryOrderItem extends Model
         'product_id',
         'quantity_ordered',
         'quantity_delivered'
+    ];
+
+    protected $dispatchesEvents = [
+        'created' => FactoryOrderItemCreated::class,
     ];
 
     public function factoryOrder()

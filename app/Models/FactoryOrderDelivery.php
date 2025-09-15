@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\DeliveryCreated;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -17,6 +18,10 @@ class FactoryOrderDelivery extends Model
 
     protected $casts = [
         'delivered_at' => 'datetime',
+    ];
+
+    protected $dispatchesEvents = [
+        'created' => DeliveryCreated::class,
     ];
 
     public function factoryOrderItem(): BelongsTo

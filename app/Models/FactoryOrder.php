@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Events\FactoryOrderCreated;
+use App\Events\FactoryOrderStatusChanged;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\FactoryOrderItem;
 
@@ -13,6 +15,20 @@ class FactoryOrder extends Model
         'order_number',
         'status'
     ];
+
+    protected $dispatchesEvents = [
+        'created' => FactoryOrderCreated::class,
+    ];
+
+    protected static function booted()
+    {
+        static::updating(function ($factoryOrder) {
+            if ($factoryOrder->isDirty('status')) {
+                $oldStatus = $factoryOrder->getOriginal('status');
+                event(new FactoryOrderStatusChanged($factoryOrder, $oldStatus));
+            }
+        });
+    }
 
     public function factory()
     {
