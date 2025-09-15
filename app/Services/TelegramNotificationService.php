@@ -12,9 +12,12 @@ class TelegramNotificationService
 
     public function __construct()
     {
-        $this->chatId = config('telegram.bots.mybot.chat_id', env('TELEGRAM_CHAT_ID'));
+        // $this->chatId = config('telegram.bots.mybot.chat_id', env('TELEGRAM_CHAT_ID'));
+        // $this->botName = config('telegram.default', 'mybot');
+        $this->chatId = env('TELEGRAM_CHAT_ID');
         $this->botName = config('telegram.default', 'mybot');
     }
+
 
     /**
      * Отправка сообщения в Telegram
