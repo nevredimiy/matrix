@@ -4,12 +4,10 @@ namespace App\Listeners;
 
 use App\Events\FactoryOrderStatusChanged;
 use App\Services\TelegramNotificationService;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
+// make synchronous
 
-class SendFactoryOrderStatusChangedNotification implements ShouldQueue
+class SendFactoryOrderStatusChangedNotification
 {
-    use InteractsWithQueue;
 
     protected $telegramService;
 

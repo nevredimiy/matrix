@@ -4,12 +4,10 @@ namespace App\Listeners;
 
 use App\Events\DeliveryCreated;
 use App\Services\TelegramNotificationService;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
+// make synchronous
 
-class SendDeliveryCreatedNotification implements ShouldQueue
+class SendDeliveryCreatedNotification
 {
-    use InteractsWithQueue;
 
     protected $telegramService;
 

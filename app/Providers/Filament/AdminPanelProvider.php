@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Pages\FactoryMissingPage;
 use App\Filament\Pages\FactoryOrderItem2;
+use App\Filament\Pages\CrmSettings;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -73,6 +74,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->pages([
                 FactoryMissingPage::class,
+                CrmSettings::class,
             ])
             
             ->navigationItems([              

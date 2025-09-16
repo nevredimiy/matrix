@@ -4,18 +4,24 @@ namespace App\Services;
 
 use Telegram\Bot\Laravel\Facades\Telegram;
 use Illuminate\Support\Facades\Log;
+use App\Models\Setting;
 
 class TelegramNotificationService
 {
     protected $chatId;
     protected $botName;
+    protected $botToken;
 
     public function __construct()
     {
-        $this->chatId = config('telegram.bots.mybot.chat_id', env('TELEGRAM_CHAT_ID'));
         $this->botName = config('telegram.default', 'mybot');
-        // $this->chatId = env('TELEGRAM_CHAT_ID');
-        // $this->botName = config('telegram.default', 'mybot');
+        $this->chatId = Setting::get('telegram_chat_id', config('telegram.bots.mybot.chat_id', env('TELEGRAM_CHAT_ID')));
+        $this->botToken = Setting::get('telegram_bot_token', config("telegram.bots.{$this->botName}.token"));
+
+        if (!empty($this->botToken)) {
+            // Override bot token at runtime from settings
+            config(["telegram.bots.{$this->botName}.token" => $this->botToken]);
+        }
     }
 
 

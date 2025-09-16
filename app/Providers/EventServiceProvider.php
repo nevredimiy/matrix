@@ -23,21 +23,7 @@ class EventServiceProvider extends ServiceProvider
      * @var array<class-string, array<int, class-string>>
      */
     protected $listen = [
-        FactoryOrderCreated::class => [
-            SendFactoryOrderCreatedNotification::class,
-        ],
-        FactoryOrderStatusChanged::class => [
-            SendFactoryOrderStatusChangedNotification::class,
-        ],
-        OrderCreated::class => [
-            SendOrderCreatedNotification::class,
-        ],
-        DeliveryCreated::class => [
-            SendDeliveryCreatedNotification::class,
-        ],
-        FactoryOrderItemCreated::class => [
-            SendFactoryOrderItemCreatedNotification::class,
-        ],
+        // Убираем дублирование - Laravel автоматически регистрирует слушатели
     ];
 
     /**
